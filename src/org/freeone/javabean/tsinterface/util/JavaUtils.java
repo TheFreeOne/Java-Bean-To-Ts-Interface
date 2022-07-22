@@ -1,4 +1,4 @@
-package org.freeone.javabean.tsinterface;
+package org.freeone.javabean.tsinterface.util;
 
 import com.github.javaparser.JavaParser;
 import com.github.javaparser.ParseResult;

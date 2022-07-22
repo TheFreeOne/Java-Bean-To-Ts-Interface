@@ -1,4 +1,4 @@
-package org.freeone.javabean.tsinterface;
+package org.freeone.javabean.tsinterface.util;
 
 import com.intellij.core.JavaCoreApplicationEnvironment;
 import com.intellij.core.JavaCoreProjectEnvironment;
@@ -7,9 +7,7 @@ import com.intellij.lang.FileASTNode;
 import com.intellij.mock.MockProject;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileFactory;
-import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,10 +15,66 @@ import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 public class CommonUtils {
 
-    public static final List<String> numberTypes = Arrays.asList("Byte", "Short", "Integer", "Long", "Double", "Float", "BigDecimal");
+    public static final List<String> numberTypes = Arrays.asList("byte", "short", "int", "long", "double", "float");
+
+
+    /**
+     * Determine whether the field is a numeric type
+     *
+     * @param field
+     * @return
+     */
+    public static boolean isNumber(PsiField field) {
+        List<PsiType> numberSuperClass = Arrays.stream(field.getType().getSuperTypes()).filter(superTypeItem -> superTypeItem.getCanonicalText().equals("java.lang.Number")).collect(Collectors.toList());
+        if (!numberSuperClass.isEmpty()) {
+            return true;
+        }
+        String canonicalText = field.getType().getCanonicalText();
+        if (numberTypes.contains(canonicalText)) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Check whether the field is an array
+     *
+     * @param field
+     * @return
+     */
+    public static boolean isArray(PsiField field) {
+        boolean contains = field.getText().contains("[]");
+        if (contains) {
+            return true;
+        }
+        PsiType[] superTypes = field.getType().getSuperTypes();
+        List<PsiType> collect = Arrays.stream(superTypes).filter(superType -> superType.getCanonicalText().contains("java.util.Collection<")).collect(Collectors.toList());
+        if (!collect.isEmpty()) {
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean isString(PsiField field) {
+        String presentableText = field.getType().getPresentableText();
+        if (presentableText.equals("String")) {
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean isBoolean(PsiField field) {
+        String canonicalText = field.getType().getCanonicalText();
+        if ("java.lang.Boolean".equals(canonicalText) || "boolean".equals(canonicalText)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 
     private static ExecutorService cachedThreadPool;
 
@@ -38,6 +92,7 @@ public class CommonUtils {
 
     /**
      * 解析java文件
+     *
      * @param absolutePath
      * @return
      * @throws Exception
@@ -57,10 +112,10 @@ public class CommonUtils {
     private static PsiJavaFile parseJavaSource(String JAVA_SOURCE, PsiFileFactory psiFileFactory) {
         PsiFile psiFile = psiFileFactory.createFileFromText("__dummy_file__.java", JavaFileType.INSTANCE, JAVA_SOURCE);
 
-        if (psiFile instanceof PsiJavaFile){
+        if (psiFile instanceof PsiJavaFile) {
 //        return psiJavaFile.getNode();
-            return (PsiJavaFile)psiFile;
-        }else {
+            return (PsiJavaFile) psiFile;
+        } else {
             throw new RuntimeException("Target is not a valid java file");
         }
     }
@@ -79,8 +134,8 @@ public class CommonUtils {
         return environment.getProject();
     }
 
-    public static synchronized ExecutorService getCachedThreadPool(){
-        if(cachedThreadPool == null){
+    public static synchronized ExecutorService getCachedThreadPool() {
+        if (cachedThreadPool == null) {
             cachedThreadPool = Executors.newCachedThreadPool();
         }
         ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(1, Integer.MAX_VALUE, 0L, TimeUnit.SECONDS, new LinkedBlockingQueue<>(100));

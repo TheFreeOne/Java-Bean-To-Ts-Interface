@@ -1,11 +1,5 @@
 package org.freeone.javabean.tsinterface;
 
-import com.github.javaparser.ast.CompilationUnit;
-import com.intellij.lang.FileASTNode;
-import com.intellij.lang.impl.PsiBuilderImpl;
-import com.intellij.lang.java.parser.FileParser;
-import com.intellij.lang.java.parser.JavaParser;
-import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -13,12 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.file.PsiFileImplUtil;
-import com.intellij.psi.impl.source.PsiFileImpl;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
+import org.freeone.javabean.tsinterface.util.CommonUtils;
 
 public class JavaBeanToTypescriptInterfaceAction extends AnAction {
 
@@ -49,21 +38,30 @@ public class JavaBeanToTypescriptInterfaceAction extends AnAction {
                 PsiClass[] classes = psiJavaFile.getClasses();
                 System.out.println("classes length = " + classes.length);
                 for (PsiClass aClass : classes) {
+
                     PsiField[] allFields = aClass.getAllFields();
                     for (PsiField fieldItem : allFields) {
-                        List<PsiType> numberSuperClass = Arrays.stream(fieldItem.getType().getSuperTypes()).filter(superTypeItem -> superTypeItem.getCanonicalText().equals("java.lang.Number")).collect(Collectors.toList());
-                        if (!numberSuperClass.isEmpty()){
-                            // number
-                        }
-
+                        StringBuilder stringBuilder = new StringBuilder("  ");
                         String name = fieldItem.getName();
-                        String presentableText = fieldItem.getType().getPresentableText();
-                        if (presentableText.equals("String")) {
-                            // :string
-                        }
-                        String canonicalText = fieldItem.getType().getCanonicalText();
-                        System.out.println(name + ": " +presentableText + " - " + canonicalText);
+                        stringBuilder.append(name);
+                        boolean isArray = CommonUtils.isArray(fieldItem);
+                        boolean isNumber = CommonUtils.isNumber(fieldItem);
+                        boolean isString = CommonUtils.isString(fieldItem);
+                        boolean isBoolean = CommonUtils.isBoolean(fieldItem);
 
+                        if (isNumber){
+                            stringBuilder.append(": number");
+                        } else if (isString){
+                            stringBuilder.append(": String");
+                        } else if (isBoolean){
+                            stringBuilder.append(": boolean");
+                        }else {
+                            stringBuilder.append(": any");
+                        }
+                        if (isArray){
+                            stringBuilder.append("[]");
+                        }
+                        System.out.println(stringBuilder.toString());
                     }
                     System.out.println(aClass);
                 }
