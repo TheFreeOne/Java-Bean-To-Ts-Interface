@@ -1,0 +1,37 @@
+<idea-plugin>
+  <id>org.freeone.javabean.tsinterface</id>
+  <name>Java Bean 2 TSI</name>
+  <version>0.0.1</version>
+  <vendor email="free077@qq.com" url="https://github.com/TheFreeOne/">TheFreeOne</vendor>
+
+  <description>
+    Convert java bean to typescript interface
+  </description>
+
+  <change-notes>
+    0.0.1 first add Convert java bean to typescript interface &lt;br/&gt;
+  </change-notes>
+
+  <!-- please see https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html for description -->
+  <idea-version since-build="173.0"/>
+
+  <!-- please see https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
+       on how to target different products -->
+  <depends>com.intellij.modules.java</depends>
+  <depends>com.intellij.modules.platform</depends>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <!-- Add your extensions here -->
+  </extensions>
+
+  <actions>
+    <!-- Add your actions here -->
+    <action id="JavaBeanToTypescriptInterface"
+            class="org.freeone.javabean.tsinterface.JavaBeanToTypescriptInterfaceAction"
+            text="(→_→) java bean to typescript interface"
+            description="Right click on a java bean file and convert it to a typescript interface">
+      <add-to-group group-id="ProjectViewPopupMenuModifyGroup" anchor="last" />
+    </action>
+  </actions>
+
+</idea-plugin>
