@@ -7,9 +7,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.freeone.javabean.tsinterface.util.CommonUtils;
 
 public class JavaBeanToTypescriptInterfaceAction extends AnAction {
+
+    public static final String requireSplitTag = ": ";
+    public static final String notRequireSplitTag = "?: ";
 
     @Override
     public void actionPerformed(AnActionEvent e) {
@@ -29,7 +33,6 @@ public class JavaBeanToTypescriptInterfaceAction extends AnAction {
             final String path = target.getPath();
             System.out.println("path = " + path);
 
-            assert project != null;
             PsiManager psiMgr = PsiManager.getInstance(project);
             PsiFile file = psiMgr.findFile(target);
             if (file instanceof PsiJavaFile ) {
@@ -48,16 +51,34 @@ public class JavaBeanToTypescriptInterfaceAction extends AnAction {
                         boolean isNumber = CommonUtils.isNumber(fieldItem);
                         boolean isString = CommonUtils.isString(fieldItem);
                         boolean isBoolean = CommonUtils.isBoolean(fieldItem);
+                        if (isArray) {
+                            // get generics
+                            String generics = CommonUtils.getGenericsForArray(fieldItem);
+                            stringBuilder.append(requireSplitTag).append(generics);
+                            if (!CommonUtils.isTypescriptPrimaryType(generics)){
+                                // TODO: 2022-07-22 从导入查找类
+                                String canonicalText = CommonUtils.getJavaBeanTypeForField(fieldItem);
+                                PsiManager instance = PsiManager.getInstance(project);
+                                GlobalSearchScope globalSearchScope = GlobalSearchScope.allScope(project);
+                                PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass("213132", globalSearchScope);
+                                if (psiClass != null){
+                                    // TODO: 2022-07-22 获取类的信息填充到文本上 
+                                }
 
-                        if (isNumber){
-                            stringBuilder.append(": number");
-                        } else if (isString){
-                            stringBuilder.append(": String");
-                        } else if (isBoolean){
-                            stringBuilder.append(": boolean");
+                            }
                         }else {
-                            stringBuilder.append(": any");
+                            if (isNumber){
+                                stringBuilder.append(requireSplitTag).append("number");
+                            } else if (isString){
+                                stringBuilder.append(requireSplitTag).append("string");
+                            } else if (isBoolean){
+                                stringBuilder.append(requireSplitTag).append("boolean");
+                            }else {
+                                stringBuilder.append(requireSplitTag).append("any");
+                            }
                         }
+
+                        // end of field
                         if (isArray){
                             stringBuilder.append("[]");
                         }

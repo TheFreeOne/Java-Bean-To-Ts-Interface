@@ -3,15 +3,13 @@ package org.freeone.javabean.tsinterface.util;
 import com.intellij.core.JavaCoreApplicationEnvironment;
 import com.intellij.core.JavaCoreProjectEnvironment;
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.lang.FileASTNode;
 import com.intellij.mock.MockProject;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.PsiClassReferenceType;
 
 import java.io.File;
-import java.io.IOException;
-import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.*;
@@ -38,6 +36,100 @@ public class CommonUtils {
             return true;
         }
         return false;
+    }
+
+    /**
+     * 获取数组的泛型
+     * @param field
+     * @return
+     */
+    public static String getGenericsForArray(PsiField field) {
+        if (isArray(field)) {
+            PsiType type = field.getType();
+
+            if (type instanceof PsiArrayType) {
+                // 数组 【】
+                PsiArrayType psiArrayType = (PsiArrayType) type;
+                PsiType deepComponentType = psiArrayType.getDeepComponentType();
+                List<PsiType> numberSuperClass = Arrays.stream(deepComponentType.getSuperTypes()).filter(superTypeItem -> superTypeItem.getCanonicalText().equals("java.lang.Number")).collect(Collectors.toList());
+                if (!numberSuperClass.isEmpty()) {
+                    return "number";
+                }
+                String canonicalText = deepComponentType.getCanonicalText();
+                if("java.lang.Boolean".equals(canonicalText) ){
+                    return "boolean";
+                } else if("java.lang.String".equals(canonicalText) ){
+                    return "string";
+                } else {
+                    return deepComponentType.getPresentableText();
+                }
+            } else if (type instanceof PsiClassReferenceType){
+                // 集合
+                PsiClassReferenceType psiClassReferenceType = (PsiClassReferenceType) type;
+                String name = psiClassReferenceType.getName();
+                String className = psiClassReferenceType.getClassName();
+                PsiType[] parameters = psiClassReferenceType.getParameters();
+                if (parameters.length == 0){
+                    return "any";
+                }else{
+                    PsiType deepComponentType = parameters[0].getDeepComponentType();
+                    // 判断泛型是不是number
+                    List<PsiType> numberSuperClass = Arrays.stream(deepComponentType.getSuperTypes()).filter(superTypeItem -> superTypeItem.getCanonicalText().equals("java.lang.Number")).collect(Collectors.toList());
+                    if (!numberSuperClass.isEmpty()) {
+                        return "number";
+                    }
+                    String canonicalText = deepComponentType.getCanonicalText();
+                    if("java.lang.Boolean".equals(canonicalText) ){
+                        return "boolean";
+                    } else if("java.lang.String".equals(canonicalText) ){
+                        return "string";
+                    } else {
+
+                        return deepComponentType.getPresentableText();
+                    }
+                }
+            }
+
+
+            return "any";
+        } else {
+            throw new RuntimeException("target field is not  array type");
+        }
+    }
+
+    public static boolean isTypescriptPrimaryType (String type){
+        if ("number".equals(type) || "string".equals(type) || "boolean".equals(type)){
+            return true;
+        }
+        return false;
+    }
+
+    public static String getJavaBeanTypeForField(PsiField field){
+        if (isArray(field)) {
+            PsiType type = field.getType();
+
+            if (type instanceof PsiArrayType) {
+                // 数组 【】
+                PsiArrayType psiArrayType = (PsiArrayType) type;
+                PsiType deepComponentType = psiArrayType.getDeepComponentType();
+                String canonicalText = deepComponentType.getCanonicalText();
+                return canonicalText;
+            } else if (type instanceof PsiClassReferenceType){
+                // 集合
+                PsiClassReferenceType psiClassReferenceType = (PsiClassReferenceType) type;
+                String name = psiClassReferenceType.getName();
+                String className = psiClassReferenceType.getClassName();
+                PsiType[] parameters = psiClassReferenceType.getParameters();
+                PsiType deepComponentType = parameters[0].getDeepComponentType();
+                String canonicalText = deepComponentType.getCanonicalText();
+                return canonicalText;
+            }else {
+
+                return "any";
+            }
+        } else {
+            throw new RuntimeException("target field is not  array type");
+        }
     }
 
     /**
@@ -141,4 +233,6 @@ public class CommonUtils {
         ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(1, Integer.MAX_VALUE, 0L, TimeUnit.SECONDS, new LinkedBlockingQueue<>(100));
         return cachedThreadPool;
     }
+
+
 }
