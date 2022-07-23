@@ -1,7 +1,7 @@
 <idea-plugin>
   <id>org.freeone.javabean.tsinterface</id>
   <name>Java Bean 2 TSI</name>
-  <version>0.0.1</version>
+  <version>0.0.2</version>
   <vendor email="free077@qq.com" url="https://github.com/TheFreeOne/">TheFreeOne</vendor>
 
   <description>

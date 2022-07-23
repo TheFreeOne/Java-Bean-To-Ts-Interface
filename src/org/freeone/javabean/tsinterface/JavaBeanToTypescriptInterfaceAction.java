@@ -3,12 +3,20 @@ package org.freeone.javabean.tsinterface;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.freeone.javabean.tsinterface.util.CommonUtils;
+import org.freeone.javabean.tsinterface.util.TypescriptUtils;
+
+import java.io.BufferedWriter;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 
 public class JavaBeanToTypescriptInterfaceAction extends AnAction {
 
@@ -37,75 +45,28 @@ public class JavaBeanToTypescriptInterfaceAction extends AnAction {
             PsiFile file = psiMgr.findFile(target);
             if (file instanceof PsiJavaFile ) {
                 PsiJavaFile psiJavaFile = (PsiJavaFile) file;
-                System.out.println(psiJavaFile);
-                PsiClass[] classes = psiJavaFile.getClasses();
-                System.out.println("classes length = " + classes.length);
-                for (PsiClass aClass : classes) {
 
-                    PsiField[] allFields = aClass.getAllFields();
-                    for (PsiField fieldItem : allFields) {
-                        StringBuilder stringBuilder = new StringBuilder("  ");
-                        String name = fieldItem.getName();
-                        stringBuilder.append(name);
-                        boolean isArray = CommonUtils.isArray(fieldItem);
-                        boolean isNumber = CommonUtils.isNumber(fieldItem);
-                        boolean isString = CommonUtils.isString(fieldItem);
-                        boolean isBoolean = CommonUtils.isBoolean(fieldItem);
-                        if (isArray) {
-                            // get generics
-                            String generics = CommonUtils.getGenericsForArray(fieldItem);
-                            stringBuilder.append(requireSplitTag).append(generics);
-                            if (!CommonUtils.isTypescriptPrimaryType(generics)){
-                                // TODO: 2022-07-22 从导入查找类
-                                String canonicalText = CommonUtils.getJavaBeanTypeForField(fieldItem);
-                                PsiManager instance = PsiManager.getInstance(project);
-                                GlobalSearchScope globalSearchScope = GlobalSearchScope.allScope(project);
-                                PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass("213132", globalSearchScope);
-                                if (psiClass != null){
-                                    // TODO: 2022-07-22 获取类的信息填充到文本上 
-                                }
+                String interfaceContent = new TypescriptUtils().generatorInterfaceContent(project, psiJavaFile);
+                System.out.println(interfaceContent);
 
-                            }
-                        }else {
-                            if (isNumber){
-                                stringBuilder.append(requireSplitTag).append("number");
-                            } else if (isString){
-                                stringBuilder.append(requireSplitTag).append("string");
-                            } else if (isBoolean){
-                                stringBuilder.append(requireSplitTag).append("boolean");
-                            }else {
-                                stringBuilder.append(requireSplitTag).append("any");
-                            }
-                        }
+                FileChooserDescriptor chooserDescriptor = CommonUtils.createFileChooserDescriptor("选择文件夹", "文件将会保存在此目录");
+                VirtualFile savePathFile = FileChooser.chooseFile(chooserDescriptor, null, null);
+                if (savePathFile != null && savePathFile.isDirectory()){
+                    String savePath = savePathFile.getPath();
+                    String nameWithoutExtension = psiJavaFile.getVirtualFile().getNameWithoutExtension();
+                    String interfaceFileSavePath = savePath + "/" + nameWithoutExtension+".d.ts";
+                    try {
+                        BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(interfaceFileSavePath,false),"utf-8"));
 
-                        // end of field
-                        if (isArray){
-                            stringBuilder.append("[]");
-                        }
-                        System.out.println(stringBuilder.toString());
+                        bufferedWriter.write(interfaceContent);
+                        bufferedWriter.close();
+                    } catch (IOException ioException) {
+                        ioException.printStackTrace();
                     }
-                    System.out.println(aClass);
                 }
             }
 
-//            CommonUtils.getCachedThreadPool().execute(()-> {
-//                try {
-//
-////                    CompilationUnit parse = JavaUtils.parse(path);
-////                    System.out.println(parse);
-//
-//
-//                } catch (Exception exception) {
-//                    String errorMessage = "";
-//                    if (exception instanceof NullPointerException) {
-//                        errorMessage = "NullPointerException";
-//                    } else {
-//                        errorMessage = exception.getMessage();
-//                    }
-//                    exception.printStackTrace();
-//                    Messages.showErrorDialog(errorMessage, "Plugin Internal Error");
-//                }
-//            });
+
         } else {
             Messages.showInfoMessage("Please choose a Java Bean", "");
         }

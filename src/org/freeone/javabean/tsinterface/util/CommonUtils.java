@@ -5,9 +5,13 @@ import com.intellij.core.JavaCoreProjectEnvironment;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.mock.MockProject;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
+import com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl;
 
 import java.io.File;
 import java.util.Arrays;
@@ -18,6 +22,8 @@ import java.util.stream.Collectors;
 public class CommonUtils {
 
     public static final List<String> numberTypes = Arrays.asList("byte", "short", "int", "long", "double", "float");
+
+    public static final List<String> requireAnnotationShortNameList = Arrays.asList("NotNull", "NotEmpty", "NotBlank");
 
 
     /**
@@ -40,6 +46,7 @@ public class CommonUtils {
 
     /**
      * 获取数组的泛型
+     *
      * @param field
      * @return
      */
@@ -56,22 +63,22 @@ public class CommonUtils {
                     return "number";
                 }
                 String canonicalText = deepComponentType.getCanonicalText();
-                if("java.lang.Boolean".equals(canonicalText) ){
+                if ("java.lang.Boolean".equals(canonicalText)) {
                     return "boolean";
-                } else if("java.lang.String".equals(canonicalText) ){
+                } else if ("java.lang.String".equals(canonicalText)) {
                     return "string";
                 } else {
                     return deepComponentType.getPresentableText();
                 }
-            } else if (type instanceof PsiClassReferenceType){
+            } else if (type instanceof PsiClassReferenceType) {
                 // 集合
                 PsiClassReferenceType psiClassReferenceType = (PsiClassReferenceType) type;
                 String name = psiClassReferenceType.getName();
                 String className = psiClassReferenceType.getClassName();
                 PsiType[] parameters = psiClassReferenceType.getParameters();
-                if (parameters.length == 0){
+                if (parameters.length == 0) {
                     return "any";
-                }else{
+                } else {
                     PsiType deepComponentType = parameters[0].getDeepComponentType();
                     // 判断泛型是不是number
                     List<PsiType> numberSuperClass = Arrays.stream(deepComponentType.getSuperTypes()).filter(superTypeItem -> superTypeItem.getCanonicalText().equals("java.lang.Number")).collect(Collectors.toList());
@@ -79,9 +86,9 @@ public class CommonUtils {
                         return "number";
                     }
                     String canonicalText = deepComponentType.getCanonicalText();
-                    if("java.lang.Boolean".equals(canonicalText) ){
+                    if ("java.lang.Boolean".equals(canonicalText)) {
                         return "boolean";
-                    } else if("java.lang.String".equals(canonicalText) ){
+                    } else if ("java.lang.String".equals(canonicalText)) {
                         return "string";
                     } else {
 
@@ -97,14 +104,14 @@ public class CommonUtils {
         }
     }
 
-    public static boolean isTypescriptPrimaryType (String type){
-        if ("number".equals(type) || "string".equals(type) || "boolean".equals(type)){
+    public static boolean isTypescriptPrimaryType(String type) {
+        if ("number".equals(type) || "string".equals(type) || "boolean".equals(type)) {
             return true;
         }
         return false;
     }
 
-    public static String getJavaBeanTypeForField(PsiField field){
+    public static String getJavaBeanTypeForArrayField(PsiField field) {
         if (isArray(field)) {
             PsiType type = field.getType();
 
@@ -114,7 +121,7 @@ public class CommonUtils {
                 PsiType deepComponentType = psiArrayType.getDeepComponentType();
                 String canonicalText = deepComponentType.getCanonicalText();
                 return canonicalText;
-            } else if (type instanceof PsiClassReferenceType){
+            } else if (type instanceof PsiClassReferenceType) {
                 // 集合
                 PsiClassReferenceType psiClassReferenceType = (PsiClassReferenceType) type;
                 String name = psiClassReferenceType.getName();
@@ -123,13 +130,36 @@ public class CommonUtils {
                 PsiType deepComponentType = parameters[0].getDeepComponentType();
                 String canonicalText = deepComponentType.getCanonicalText();
                 return canonicalText;
-            }else {
+            } else {
 
                 return "any";
             }
         } else {
             throw new RuntimeException("target field is not  array type");
         }
+    }
+
+    public static String getJavaBeanTypeForNormalField(PsiField field) {
+
+            PsiType type = field.getType();
+
+            if (type instanceof PsiArrayType) {
+                // 数组 【】
+                PsiArrayType psiArrayType = (PsiArrayType) type;
+                PsiType deepComponentType = psiArrayType.getDeepComponentType();
+                String canonicalText = deepComponentType.getCanonicalText();
+                return canonicalText;
+            } else if (type instanceof PsiClassReferenceType) {
+                // 集合
+                PsiClassReferenceType psiClassReferenceType = (PsiClassReferenceType) type;
+                PsiType deepComponentType = psiClassReferenceType.getDeepComponentType();
+                String canonicalText = deepComponentType.getCanonicalText();
+                return canonicalText;
+            } else {
+
+                return "any";
+            }
+
     }
 
     /**
@@ -166,6 +196,34 @@ public class CommonUtils {
         } else {
             return false;
         }
+    }
+
+    /**
+     * 判断字段是否是必须的
+     *
+     * @param annotations
+     * @return
+     */
+    public static boolean isFieldRequire(PsiAnnotation[] annotations) {
+        if (annotations != null) {
+            for (PsiAnnotation annotation : annotations) {
+                if (annotation instanceof PsiAnnotationImpl) {
+                    PsiAnnotationImpl annotationImpl = (PsiAnnotationImpl) annotation;
+                    String qualifiedName = annotationImpl.getQualifiedName();
+                    if (qualifiedName != null) {
+                        String shortName = StringUtil.getShortName(qualifiedName);
+                        for (String requireAnnotationShortName : requireAnnotationShortNameList) {
+                            if (requireAnnotationShortName.equalsIgnoreCase(shortName)) {
+                                return true;
+                            }
+                        }
+                    }
+
+                }
+                System.out.println(annotation);
+            }
+        }
+        return false;
     }
 
     private static ExecutorService cachedThreadPool;
@@ -234,5 +292,21 @@ public class CommonUtils {
         return cachedThreadPool;
     }
 
-
+    /**
+     * 获取一个文件选择描述器
+     *
+     * @param title       标题
+     * @param description 描述
+     * @return FileChooserDescriptor
+     */
+    public static FileChooserDescriptor createFileChooserDescriptor(String title, String description) {
+        FileChooserDescriptor singleFolderDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
+        if (title != null) {
+            singleFolderDescriptor.setTitle(title);
+        }
+        if (description != null) {
+            singleFolderDescriptor.setDescription(description);
+        }
+        return singleFolderDescriptor;
+    }
 }
