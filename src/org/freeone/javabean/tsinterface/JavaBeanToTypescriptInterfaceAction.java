@@ -49,7 +49,7 @@ public class JavaBeanToTypescriptInterfaceAction extends AnAction {
                 String interfaceContent = new TypescriptUtils().generatorInterfaceContent(project, psiJavaFile);
                 System.out.println(interfaceContent);
 
-                FileChooserDescriptor chooserDescriptor = CommonUtils.createFileChooserDescriptor("选择文件夹", "文件将会保存在此目录");
+                FileChooserDescriptor chooserDescriptor = CommonUtils.createFileChooserDescriptor("Choose a folder", "The declaration file end with '.d.ts' will be saved in this folder");
                 VirtualFile savePathFile = FileChooser.chooseFile(chooserDescriptor, null, null);
                 if (savePathFile != null && savePathFile.isDirectory()){
                     String savePath = savePathFile.getPath();
