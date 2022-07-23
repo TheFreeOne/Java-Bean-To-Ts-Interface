@@ -1,7 +1,7 @@
 <idea-plugin>
   <id>org.freeone.javabean.tsinterface</id>
   <name>Java Bean 2 TSI</name>
-  <version>0.0.1</version>
+  <version>0.0.2</version>
   <vendor email="free077@qq.com" url="https://github.com/TheFreeOne/Java-Bean-To-Ts-Interface">TheFreeOne</vendor>
 
   <description>
@@ -10,6 +10,7 @@
   </description>
 
   <change-notes>
+    0.0.2 only find java file in project scope &lt;br/&gt;
     0.0.1 first add Convert java bean to typescript interface &lt;br/&gt;
   </change-notes>
 
