@@ -1,5 +1,6 @@
 package org.freeone.javabean.tsinterface.util;
 
+import com.intellij.lang.jvm.types.JvmReferenceType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -125,11 +126,11 @@ public class TypescriptUtils {
                     if (!CommonUtils.isTypescriptPrimaryType(generics)) {
 
                         String canonicalText = CommonUtils.getJavaBeanTypeForArrayField(fieldItem);
-                        GlobalSearchScope globalSearchScope = GlobalSearchScope.allScope(project);
-
+//                        GlobalSearchScope globalSearchScope = GlobalSearchScope.allScope(project);
+                        GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
                         Integer findClassTime = canonicalText2findClassTimeMap.getOrDefault(canonicalText, 0);
                         if (findClassTime == 0) {
-                            PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(canonicalText, globalSearchScope);
+                            PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(canonicalText, projectScope);
                             if (psiClass != null) {
                                 canonicalText2findClassTimeMap.put(canonicalText, 1);
                                 PsiElement parent = psiClass.getParent();
@@ -154,15 +155,21 @@ public class TypescriptUtils {
                         // 不需要设置:any
                         boolean needSetAny = true;
                         String canonicalText = CommonUtils.getJavaBeanTypeForNormalField(fieldItem);
-                        GlobalSearchScope globalSearchScope = GlobalSearchScope.allScope(project);
+                        GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
+//                        GlobalSearchScope globalSearchScope = GlobalSearchScope.allScope(project);
+
                         Integer findClassTime = canonicalText2findClassTimeMap.getOrDefault(canonicalText, 0);
                         if (findClassTime == 0) {
-                            PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(canonicalText, globalSearchScope);
+                            PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(canonicalText, projectScope);
                             if (psiClass != null) {
                                 canonicalText2findClassTimeMap.put(canonicalText, 1);
 
 
-                                if ("Enum".equalsIgnoreCase(psiClass.getSuperClassType().getName())) {
+                                JvmReferenceType superClassType = psiClass.getSuperClassType();
+                                if (superClassType ==null){
+                                    System.out.println(1);
+                                }
+                                if ("Enum".equalsIgnoreCase(superClassType.getName())) {
                                     // Enum
                                     PsiElement parent = psiClass.getParent();
                                     if (parent instanceof PsiJavaFile) {
