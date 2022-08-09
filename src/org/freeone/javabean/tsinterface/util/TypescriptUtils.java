@@ -83,9 +83,7 @@ public class TypescriptUtils {
         if (isDefault) {
             defaultText = "default ";
         }
-        System.out.println(psiJavaFile);
         PsiClass[] classes = psiJavaFile.getClasses();
-        System.out.println("classes length = " + classes.length);
 
         for (PsiClass aClass : classes) {
             String classNameAsInterfaceName = aClass.getName();
@@ -170,7 +168,7 @@ public class TypescriptUtils {
                                     canonicalText2findClassTimeMap.put(canonicalText, 1);
                                     JvmReferenceType superClassType = psiClass.getSuperClassType();
                                     if (superClassType == null) {
-                                        System.out.println(1);
+
                                     }
                                     if ("Enum".equalsIgnoreCase(superClassType.getName())) {
                                         // Enum
@@ -219,13 +217,10 @@ public class TypescriptUtils {
                 }
                 // 每个属性后面的换行
                 interfaceContent.append("\n");
-//                System.out.println(interfaceContent.toString());
             }
-//            System.out.println(aClass);
             // end of class
             interfaceContent.append("}\n");
         }
-        System.out.println(interfaceContent.toString());
         return interfaceContent.toString();
     }
 }

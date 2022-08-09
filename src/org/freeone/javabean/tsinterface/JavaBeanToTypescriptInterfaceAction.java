@@ -39,7 +39,6 @@ public class JavaBeanToTypescriptInterfaceAction extends AnAction {
                 Messages.showInfoMessage("The file is not a java file!", "");
             }
             final String path = target.getPath();
-            System.out.println("path = " + path);
 
             PsiManager psiMgr = PsiManager.getInstance(project);
             PsiFile file = psiMgr.findFile(target);
@@ -47,7 +46,6 @@ public class JavaBeanToTypescriptInterfaceAction extends AnAction {
                 PsiJavaFile psiJavaFile = (PsiJavaFile) file;
 
                 String interfaceContent = new TypescriptUtils().generatorInterfaceContent(project, psiJavaFile);
-                System.out.println(interfaceContent);
 
                 FileChooserDescriptor chooserDescriptor = CommonUtils.createFileChooserDescriptor("Choose a folder", "The declaration file end with '.d.ts' will be saved in this folder");
                 VirtualFile savePathFile = FileChooser.chooseFile(chooserDescriptor, null, null);

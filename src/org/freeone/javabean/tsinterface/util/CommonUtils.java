@@ -220,7 +220,7 @@ public class CommonUtils {
                     }
 
                 }
-                System.out.println(annotation);
+
             }
         }
         return false;
