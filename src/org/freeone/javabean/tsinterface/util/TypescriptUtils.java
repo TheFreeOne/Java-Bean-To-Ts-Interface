@@ -1,5 +1,6 @@
 package org.freeone.javabean.tsinterface.util;
 
+import com.intellij.lang.jvm.JvmClassKind;
 import com.intellij.lang.jvm.types.JvmReferenceType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -162,33 +163,37 @@ public class TypescriptUtils {
                         if (findClassTime == 0) {
                             PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(canonicalText, projectScope);
                             if (psiClass != null) {
-                                canonicalText2findClassTimeMap.put(canonicalText, 1);
-
-
-                                JvmReferenceType superClassType = psiClass.getSuperClassType();
-                                if (superClassType ==null){
-                                    System.out.println(1);
-                                }
-                                if ("Enum".equalsIgnoreCase(superClassType.getName())) {
-                                    // Enum
-                                    PsiElement parent = psiClass.getParent();
-                                    if (parent instanceof PsiJavaFile) {
-                                        PsiJavaFile enumParentJavaFile = (PsiJavaFile) parent;
-                                        String findTypeContent = generatorTypeContent(project, enumParentJavaFile, false, treeLevel);
-                                        canonicalText2TInnerClassInterfaceContent.put(canonicalText, findTypeContent);
-                                    }
-
-
-                                } else {
-                                    // class
+                                PsiClass psiClassImpl = psiClass;
+                                JvmClassKind classKind = psiClassImpl.getClassKind();
+                                //  2022-08-09  ignroe ANNOTATION and  INTERFACE
+                                if (classKind != JvmClassKind.ANNOTATION && classKind == JvmClassKind.INTERFACE) {
                                     canonicalText2findClassTimeMap.put(canonicalText, 1);
-                                    PsiElement parent = psiClass.getParent();
-                                    if (parent instanceof PsiJavaFile) {
-                                        PsiJavaFile classParentJavaFile = (PsiJavaFile) parent;
-                                        String findClassContent = generatorInterfaceContent(project, classParentJavaFile, false, treeLevel + 1);
-                                        canonicalText2TInnerClassInterfaceContent.put(canonicalText, findClassContent);
+                                    JvmReferenceType superClassType = psiClass.getSuperClassType();
+                                    if (superClassType == null) {
+                                        System.out.println(1);
+                                    }
+                                    if ("Enum".equalsIgnoreCase(superClassType.getName())) {
+                                        // Enum
+                                        PsiElement parent = psiClass.getParent();
+                                        if (parent instanceof PsiJavaFile) {
+                                            PsiJavaFile enumParentJavaFile = (PsiJavaFile) parent;
+                                            String findTypeContent = generatorTypeContent(project, enumParentJavaFile, false, treeLevel);
+                                            canonicalText2TInnerClassInterfaceContent.put(canonicalText, findTypeContent);
+                                        }
+
+
+                                    } else {
+                                        // class
+                                        canonicalText2findClassTimeMap.put(canonicalText, 1);
+                                        PsiElement parent = psiClass.getParent();
+                                        if (parent instanceof PsiJavaFile) {
+                                            PsiJavaFile classParentJavaFile = (PsiJavaFile) parent;
+                                            String findClassContent = generatorInterfaceContent(project, classParentJavaFile, false, treeLevel + 1);
+                                            canonicalText2TInnerClassInterfaceContent.put(canonicalText, findClassContent);
+                                        }
                                     }
                                 }
+
                             }
                         }
                         canonicalText2TreeLevel.put(canonicalText, treeLevel);
