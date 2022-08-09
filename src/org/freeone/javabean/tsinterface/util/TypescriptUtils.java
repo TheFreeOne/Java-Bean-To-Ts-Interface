@@ -166,7 +166,7 @@ public class TypescriptUtils {
                                 PsiClass psiClassImpl = psiClass;
                                 JvmClassKind classKind = psiClassImpl.getClassKind();
                                 //  2022-08-09  ignroe ANNOTATION and  INTERFACE
-                                if (classKind != JvmClassKind.ANNOTATION && classKind == JvmClassKind.INTERFACE) {
+                                if (classKind != JvmClassKind.ANNOTATION && classKind != JvmClassKind.INTERFACE) {
                                     canonicalText2findClassTimeMap.put(canonicalText, 1);
                                     JvmReferenceType superClassType = psiClass.getSuperClassType();
                                     if (superClassType == null) {
