@@ -11,22 +11,22 @@ import com.intellij.psi.search.GlobalSearchScope;
 import java.util.*;
 
 public class TypescriptUtils {
-    private Map<String, Integer> canonicalText2findClassTimeMap = new HashMap<>(8);
+    private static Map<String, Integer> canonicalText2findClassTimeMap = new HashMap<>(8);
     /**
      * 属性对应的类对应在json中的等级，属性的类的等级更大
      */
-    private Map<String, Integer> canonicalText2TreeLevel = new HashMap<>(8);
+    private static Map<String, Integer> canonicalText2TreeLevel = new HashMap<>(8);
 
     /**
      * 属性类对应的interface的内容
      */
-    private Map<String, String> canonicalText2TInnerClassInterfaceContent = new HashMap<>(8);
+    private static Map<String, String> canonicalText2TInnerClassInterfaceContent = new HashMap<>(8);
 
 
     public static final String requireSplitTag = ": ";
     public static final String notRequireSplitTag = "?: ";
 
-    public String generatorInterfaceContent(Project project, PsiJavaFile psiJavaFile) {
+    public static String generatorInterfaceContent(Project project, PsiJavaFile psiJavaFile) {
 
         String interfaceContent = generatorInterfaceContent(project, psiJavaFile, true, 1);
         StringBuilder stringBuilder = new StringBuilder(interfaceContent);
@@ -51,7 +51,7 @@ public class TypescriptUtils {
         return stringBuilder.toString();
     }
 
-    public String generatorTypeContent(Project project, PsiJavaFile psiJavaFile, boolean isDefault, int treeLevel) {
+    public static String generatorTypeContent(Project project, PsiJavaFile psiJavaFile, boolean isDefault, int treeLevel) {
         StringBuilder typeContent = new StringBuilder();
         String defaultText = "";
         if (isDefault) {
@@ -77,7 +77,7 @@ public class TypescriptUtils {
         return typeContent.toString() + "\n";
     }
 
-    public String generatorInterfaceContent(Project project, PsiJavaFile psiJavaFile, boolean isDefault, int treeLevel) {
+    public static String generatorInterfaceContent(Project project, PsiJavaFile psiJavaFile, boolean isDefault, int treeLevel) {
         StringBuilder interfaceContent = new StringBuilder();
         String defaultText = "";
         if (isDefault) {
