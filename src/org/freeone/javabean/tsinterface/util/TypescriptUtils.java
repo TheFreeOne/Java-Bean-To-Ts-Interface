@@ -11,6 +11,10 @@ import com.intellij.psi.search.GlobalSearchScope;
 import java.util.*;
 
 public class TypescriptUtils {
+
+    /**
+     * 记录通过canonicalText查找次数的记录
+     */
     private static Map<String, Integer> canonicalText2findClassTimeMap = new HashMap<>(8);
     /**
      * 属性对应的类对应在json中的等级，属性的类的等级更大
@@ -26,29 +30,45 @@ public class TypescriptUtils {
     public static final String requireSplitTag = ": ";
     public static final String notRequireSplitTag = "?: ";
 
-    public static String generatorInterfaceContent(Project project, PsiJavaFile psiJavaFile) {
+    /**
+     * 移除多余的缓存
+     */
+    public static void clearCache() {
+        canonicalText2TreeLevel.clear();
+        canonicalText2TInnerClassInterfaceContent.clear();
+        canonicalText2findClassTimeMap.clear();
+    }
 
-        String interfaceContent = generatorInterfaceContent(project, psiJavaFile, true, 1);
-        StringBuilder stringBuilder = new StringBuilder(interfaceContent);
-        //将Map转换成List
-        List<Map.Entry<String, Integer>> list = new ArrayList<>(canonicalText2TreeLevel.entrySet());
-        // 借助List的sort方法，需要重写排序规则
-        Collections.sort(list, (o1, o2) -> o1.getValue() - o2.getValue());
-        // 反转
+    public static String generatorInterfaceContent(Project project, PsiJavaFile psiJavaFile) {
+        String interfaceContent;
+        try {
+            interfaceContent = generatorInterfaceContent(project, psiJavaFile, true, 1);
+            StringBuilder stringBuilder = new StringBuilder(interfaceContent);
+            //将Map转换成List
+            List<Map.Entry<String, Integer>> list = new ArrayList<>(canonicalText2TreeLevel.entrySet());
+            // 借助List的sort方法，需要重写排序规则
+            Collections.sort(list, (o1, o2) -> o1.getValue() - o2.getValue());
+            // 反转
 //        Collections.reverse(list);
-        // Collections.sort(list, Comparator.comparingInt(Map.Entry::getValue));  // IDE 提示可以写成更简便的这种形式,我还是习惯自己重新，然后lambda简化
-        Map<String, Integer> map2 = new LinkedHashMap<>();  // 这里必须声明成为LinkedHashMap，否则构造新map时会打乱顺序
-        for (Map.Entry<String, Integer> o : list) {  // 构造新map
-            map2.put(o.getKey(), o.getValue());
-        }
-        for (Map.Entry<String, Integer> entry : map2.entrySet()) {  // out
-            String key = entry.getKey();
-            String content = canonicalText2TInnerClassInterfaceContent.get(key);
-            if (content != null) {
-                stringBuilder.insert(0, content + "\n");
+            // Collections.sort(list, Comparator.comparingInt(Map.Entry::getValue));  // IDE 提示可以写成更简便的这种形式,我还是习惯自己重新，然后lambda简化
+            Map<String, Integer> map2 = new LinkedHashMap<>();  // 这里必须声明成为LinkedHashMap，否则构造新map时会打乱顺序
+            for (Map.Entry<String, Integer> o : list) {  // 构造新map
+                map2.put(o.getKey(), o.getValue());
             }
+            for (Map.Entry<String, Integer> entry : map2.entrySet()) {  // out
+                String key = entry.getKey();
+                String content = canonicalText2TInnerClassInterfaceContent.get(key);
+                if (content != null) {
+                    stringBuilder.insert(0, content + "\n");
+                }
+            }
+            return stringBuilder.toString();
+        } finally {
+            clearCache();
         }
-        return stringBuilder.toString();
+
+
+
     }
 
     public static String generatorTypeContent(Project project, PsiJavaFile psiJavaFile, boolean isDefault, int treeLevel) {

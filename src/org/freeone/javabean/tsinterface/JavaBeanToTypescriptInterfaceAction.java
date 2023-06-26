@@ -53,6 +53,7 @@ public class JavaBeanToTypescriptInterfaceAction extends AnAction {
             PsiFile file = psiMgr.findFile(target);
             if (file instanceof PsiJavaFile ) {
                 PsiJavaFile psiJavaFile = (PsiJavaFile) file;
+                // 声明文件的主要内容 || content of *.d.ts
                 String interfaceContent = TypescriptUtils.generatorInterfaceContent(project, psiJavaFile);
                 FileChooserDescriptor chooserDescriptor = CommonUtils.createFileChooserDescriptor("Choose a folder", "The declaration file end with '.d.ts' will be saved in this folder");
                 VirtualFile savePathFile = FileChooser.chooseFile(chooserDescriptor, null, null);
@@ -64,6 +65,7 @@ public class JavaBeanToTypescriptInterfaceAction extends AnAction {
                         BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(interfaceFileSavePath,false), StandardCharsets.UTF_8));
                         bufferedWriter.write(interfaceContent);
                         bufferedWriter.close();
+
                         Notification notification = notificationGroup.createNotification("The target file was saved to:  " + interfaceFileSavePath, NotificationType.INFORMATION);
                         notification.setImportant(true).notify(project);
                     } catch (IOException ioException) {

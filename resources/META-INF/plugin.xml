@@ -1,7 +1,8 @@
+<!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
   <id>org.freeone.javabean.tsinterface</id>
   <name>Java Bean 2 TS Interface</name>
-  <version>0.0.4</version>
+  <version>0.0.5</version>
   <vendor email="free077@qq.com" url="https://github.com/TheFreeOne/Java-Bean-To-Ts-Interface">TheFreeOne</vendor>
 
   <description>
@@ -12,6 +13,7 @@
   </description>
 
   <change-notes>
+    0.0.5 fix: remove cache &lt;br/&gt;
     0.0.4 show notification after file has bean created &lt;br/&gt;
     0.0.3 fix: ignore ANNOTATION and INTERFACE &lt;br/&gt;
     0.0.2 only find java file in project scope &lt;br/&gt;
@@ -27,8 +29,11 @@
   <depends>com.intellij.modules.platform</depends>
 
   <extensions defaultExtensionNs="com.intellij">
-    <!-- Add your extensions here -->
+    <notificationGroup id="Custom Notification Group"
+                       displayType="BALLOON"
+                       key="notification.group.name"/>
   </extensions>
+
 
   <actions>
     <!-- Add your actions here -->
