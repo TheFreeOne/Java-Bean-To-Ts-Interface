@@ -2,17 +2,18 @@
 <idea-plugin>
   <id>org.freeone.javabean.tsinterface</id>
   <name>Java Bean 2 TS Interface</name>
-  <version>0.0.5</version>
+  <version>0.0.6</version>
   <vendor email="free077@qq.com" url="https://github.com/TheFreeOne/Java-Bean-To-Ts-Interface">TheFreeOne</vendor>
 
   <description>
     Adds support for converting a java bean file to typescript interface file &lt;br/&gt;
     Usage instructions : After this plugin is installed, right click on a java bean file or a java entity file, click a menu item called '(→ . →) java bean to typescript interface',
-    choose a folder to save the ts interface file, then open the folder and add check the result file   &lt;br/&gt;
+    choose a folder to save the ts interface file, then open the folder and check the result file   &lt;br/&gt;
     &lt;a href="https://github.com/TheFreeOne/Java-Bean-To-Ts-Interface/blob/main/README.md" target="_blank"&gt;more information&lt;/a&gt;
   </description>
 
   <change-notes>
+    0.0.6 internal class support &lt;br/&gt;
     0.0.5 fix: remove cache &lt;br/&gt;
     0.0.4 show notification after file has bean created &lt;br/&gt;
     0.0.3 fix: ignore ANNOTATION and INTERFACE &lt;br/&gt;
