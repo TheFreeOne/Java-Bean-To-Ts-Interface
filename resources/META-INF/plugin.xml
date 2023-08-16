@@ -13,6 +13,7 @@
   </description>
 
   <change-notes>
+    0.0.7 multi internal class support and fix same interface appears multiple times in 0.0.6 &lt;br/&gt;
     0.0.6 internal class support &lt;br/&gt;
     0.0.5 fix: remove cache &lt;br/&gt;
     0.0.4 show notification after file has bean created &lt;br/&gt;
