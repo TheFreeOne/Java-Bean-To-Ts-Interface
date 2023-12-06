@@ -206,7 +206,8 @@ public class TypescriptUtils {
 
             } else if (isMap) {
                 // TODO: 2023-12-06 针对map做处理
-                interfaceContent.append(fieldSplitTag).append("{[x:string]: any}");
+                processMap(project, treeLevel, interfaceContent, fieldItem, fieldSplitTag);
+
             } else {
                 if (isNumber) {
                     interfaceContent.append(fieldSplitTag).append("number");
@@ -242,6 +243,59 @@ public class TypescriptUtils {
                 }
             }
         }
+    }
+
+    private static void processMap(Project project, int treeLevel, StringBuilder interfaceContent, PsiField fieldItem, String fieldSplitTag) {
+        PsiType type = fieldItem.getType();
+        String defaultKTYpe = "string";
+        String defaultVType = "any";
+        if (type instanceof PsiClassReferenceType) {
+            PsiClassReferenceType psiClassReferenceType = (PsiClassReferenceType) type;
+            PsiType[] parameters = psiClassReferenceType.getParameters();
+            if (parameters != null && parameters.length == 2) {
+                PsiType kType = parameters[0];
+                PsiType vType = parameters[1];
+
+                {
+                    boolean isNumber = CommonUtils.isNumberType(kType);
+                    boolean isStringType = CommonUtils.isStringType(kType);
+                    if (isNumber) {
+                        defaultKTYpe = "number";
+                    } else if (isStringType) {
+                        defaultKTYpe = "string";
+                    } else {
+                        defaultKTYpe = "any";
+                    }
+                }
+
+                {
+                    boolean isNumber = CommonUtils.isNumberType(vType);
+                    boolean isStringType = CommonUtils.isStringType(vType);
+                    if (isNumber) {
+                        defaultVType = "number";
+                    } else if (isStringType) {
+                        defaultVType = "string";
+                    } else {
+                        GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
+                        PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(vType.getCanonicalText(), projectScope);
+                        if (psiClass ==null) {
+                            defaultVType = "any";
+                        } else {
+                            defaultVType = vType.getPresentableText();
+                            findClassToTsInterface(project, treeLevel +1, vType.getCanonicalText());
+                        }
+
+
+                    }
+
+                }
+
+
+
+            }
+
+        }
+        interfaceContent.append(fieldSplitTag).append("{[x:"+defaultKTYpe+"]: "+defaultVType+"}");
     }
 
     private static void processOtherTypes(Project project, int treeLevel, StringBuilder interfaceContent, PsiField fieldItem, String fieldSplitTag) {
@@ -382,7 +436,7 @@ public class TypescriptUtils {
         } else if ("java.lang.String".equals(canonicalText)) {
             return "string";
         } else {
-            // TODO: 2023-12-06 多层
+  
             boolean isArrayType = CommonUtils.isArrayType(deepComponentType);
             boolean isMapType = CommonUtils.isMapType(deepComponentType);
             // 里头还是一层 集合
@@ -397,6 +451,7 @@ public class TypescriptUtils {
                     return firstTsTypeForArray + "[]";
                 }
             } else if (isMapType) {
+                // TODO: 2023-12-06
                 return deepComponentType.getPresentableText();
             } else {
                 findClassToTsInterface(project ,treeLevel + 1, canonicalText);

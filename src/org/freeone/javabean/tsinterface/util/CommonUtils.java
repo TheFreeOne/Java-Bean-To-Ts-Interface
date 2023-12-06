@@ -44,6 +44,14 @@ public class CommonUtils {
         return false;
     }
 
+    public  static boolean isNumberType(PsiType psiType) {
+        return Arrays.stream(psiType.getSuperTypes()).anyMatch(ele -> ele.getCanonicalText().contains("java.lang.Number"));
+    }
+
+    public  static boolean isStringType(PsiType psiType) {
+        return Arrays.stream(psiType.getSuperTypes()).anyMatch(ele -> ele.getCanonicalText().contains("java.lang.CharSequence"));
+    }
+
 
 
     /**
@@ -128,7 +136,7 @@ public class CommonUtils {
      * @return
      */
     public static boolean isArrayType(PsiType psiType) {
-        return psiType.getCanonicalText().contains("java.util.List") ||   Arrays.stream(psiType.getSuperTypes()).filter(superType -> superType.getCanonicalText().contains("java.util.Collection<")).count() > 0;
+        return psiType.getCanonicalText().contains("java.util.List") || Arrays.stream(psiType.getSuperTypes()).anyMatch(superType -> superType.getCanonicalText().contains("java.util.Collection<"));
     }
 
 
