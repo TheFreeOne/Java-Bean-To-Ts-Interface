@@ -122,6 +122,15 @@ public class CommonUtils {
         return false;
     }
 
+    /**
+     * psiType是否是数组
+     * @param psiType
+     * @return
+     */
+    public static boolean isArrayType(PsiType psiType) {
+        return psiType.getCanonicalText().contains("java.util.List") ||   Arrays.stream(psiType.getSuperTypes()).filter(superType -> superType.getCanonicalText().contains("java.util.Collection<")).count() > 0;
+    }
+
 
     public static boolean isMap(PsiField field) {
         String canonicalText = field.getType().getCanonicalText();
@@ -136,6 +145,11 @@ public class CommonUtils {
             return false;
         }
     }
+
+    public static boolean isMapType(PsiType psiType) {
+        return psiType.getCanonicalText().contains("java.util.Map") ||   Arrays.stream(psiType.getSuperTypes()).filter(superType -> superType.getCanonicalText().contains("java.util.Map")).count() > 0;
+    }
+
 
     public static boolean isString(PsiField field) {
         String presentableText = field.getType().getPresentableText();

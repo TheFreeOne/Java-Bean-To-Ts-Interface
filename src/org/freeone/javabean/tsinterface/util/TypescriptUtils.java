@@ -9,6 +9,7 @@ import com.intellij.psi.impl.source.PsiClassImpl;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -49,6 +50,7 @@ public class TypescriptUtils {
 
     /**
      * 提供给action调用的主入口
+     *
      * @param project
      * @param psiJavaFile
      * @return
@@ -71,7 +73,7 @@ public class TypescriptUtils {
             }
             for (Map.Entry<String, Integer> entry : map2.entrySet()) {  // out
                 String key = entry.getKey();
-                String content = canonicalText2TInnerClassInterfaceContent.getOrDefault(key,"");
+                String content = canonicalText2TInnerClassInterfaceContent.getOrDefault(key, "");
                 if (content != null) {
                     stringBuilder.insert(0, content + "\n");
                 }
@@ -82,11 +84,11 @@ public class TypescriptUtils {
         }
 
 
-
     }
 
     /**
      * 针对枚举获取枚举的内容
+     *
      * @param project
      * @param psiJavaFile
      * @param isDefault
@@ -122,6 +124,7 @@ public class TypescriptUtils {
 
     /**
      * 为目标java文件生成typescript的文本内容
+     *
      * @param project
      * @param psiJavaFile
      * @param isDefault
@@ -137,13 +140,14 @@ public class TypescriptUtils {
         PsiClass[] classes = psiJavaFile.getClasses();
         // 类文件只有只有一个类，查找一次就可以了
         for (PsiClass aClass : classes) {
-            doClassInterfaceContentForTypeScript(project, treeLevel, interfaceContent, defaultText, aClass,"JAVA_FILE");
+            doClassInterfaceContentForTypeScript(project, treeLevel, interfaceContent, defaultText, aClass, "JAVA_FILE");
         }
         return interfaceContent.toString();
     }
 
     /**
      * 为内部类生成typescript的文本内容，这个针对内部类进行查询
+     *
      * @param project
      * @param psiClassInParameters
      * @param isDefault
@@ -160,7 +164,7 @@ public class TypescriptUtils {
         PsiClass[] classes = psiClassInParameters.getInnerClasses();
         // 内部内部类可能重新查询多次
         PsiClass innerClassByName = psiClassInParameters.findInnerClassByName(targetPsiClass.getName(), true);
-        doClassInterfaceContentForTypeScript(project, treeLevel, interfaceContent, defaultText, innerClassByName,"CLASS");
+        doClassInterfaceContentForTypeScript(project, treeLevel, interfaceContent, defaultText, innerClassByName, "CLASS");
 //        for (PsiClass aClass : classes) {
 //            doClassInterfaceContentForTypeScript(project, treeLevel, interfaceContent, defaultText, aClass,"CLASS");
 //        }
@@ -169,13 +173,14 @@ public class TypescriptUtils {
 
     /**
      * 单个类生成
+     *
      * @param project
      * @param treeLevel
      * @param interfaceContent
      * @param defaultText
      * @param aClass
      */
-    private static void doClassInterfaceContentForTypeScript(Project project, int treeLevel, StringBuilder interfaceContent, String defaultText, PsiClass aClass,String enterTYpe) {
+    private static void doClassInterfaceContentForTypeScript(Project project, int treeLevel, StringBuilder interfaceContent, String defaultText, PsiClass aClass, String enterTYpe) {
         String classNameAsInterfaceName = aClass.getName();
         interfaceContent.append("export ").append(defaultText).append("interface ").append(classNameAsInterfaceName).append(" {\n");
         PsiField[] fields = aClass.getAllFields();
@@ -198,7 +203,7 @@ public class TypescriptUtils {
             if (isArray) {
                 // 获取泛型
                 processArray(project, treeLevel, interfaceContent, fieldItem, fieldSplitTag);
-                interfaceContent.append("[]");
+
             } else if (isMap) {
                 // TODO: 2023-12-06 针对map做处理
                 interfaceContent.append(fieldSplitTag).append("{[x:string]: any}");
@@ -243,7 +248,7 @@ public class TypescriptUtils {
         // 不需要设置:any
 //                        boolean needSetAny = true;
         String canonicalText = CommonUtils.getJavaBeanTypeForNormalField(fieldItem);
-        System.out.println("canonicalText = "+ canonicalText);
+        System.out.println("canonicalText = " + canonicalText);
         GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
 //                        GlobalSearchScope globalSearchScope = GlobalSearchScope.allScope(project);
 
@@ -281,7 +286,7 @@ public class TypescriptUtils {
                             canonicalText2TInnerClassInterfaceContent.put(canonicalText, findClassContent);
                         } else if (parent instanceof PsiClass) {
                             PsiClassImpl psiClassParent = (PsiClassImpl) parent;
-                            String findClassContent = generatorInterfaceContentForPsiClass(project, psiClassParent,   psiClass, false, treeLevel + 1);
+                            String findClassContent = generatorInterfaceContentForPsiClass(project, psiClassParent, psiClass, false, treeLevel + 1);
                             canonicalText2TInnerClassInterfaceContent.put(canonicalText, findClassContent);
                         }
                     }
@@ -301,6 +306,7 @@ public class TypescriptUtils {
 
     /**
      * 处理集合数组一类的字段
+     *
      * @param project
      * @param treeLevel
      * @param interfaceContent
@@ -309,38 +315,40 @@ public class TypescriptUtils {
      */
     private static void processArray(Project project, int treeLevel, StringBuilder interfaceContent, PsiField fieldItem, String fieldSplitTag) {
         // 泛型
-        String generics = getGenericsForArray(fieldItem);
-        interfaceContent.append(fieldSplitTag).append(generics);
+        String generics = getFirstGenericsForArray(project, treeLevel + 1, interfaceContent, fieldItem);
+        if (fieldSplitTag != null) {
+            interfaceContent.append(fieldSplitTag);
+        }
+        interfaceContent.append(generics);
         if (!CommonUtils.isTypescriptPrimaryType(generics)) {
             String canonicalText = CommonUtils.getJavaBeanTypeForArrayField(fieldItem);
             findClassToTsInterface(project, treeLevel + 1, canonicalText);
         }
+        interfaceContent.append("[]");
     }
 
     /**
      * 获取数组的泛型
-     * @param field
      * @return
      */
-    public static String getGenericsForArray(PsiField field) {
+    public static String getFirstGenericsForArray(Project project, int treeLevel, StringBuilder interfaceContent, PsiField fieldItem) {
+        PsiField field = fieldItem;
         if (CommonUtils.isArray(field)) {
             PsiType type = field.getType();
+            // 数组 【】
             if (type instanceof PsiArrayType) {
-                // 数组 【】
+
                 PsiArrayType psiArrayType = (PsiArrayType) type;
                 PsiType deepComponentType = psiArrayType.getDeepComponentType();
-                List<PsiType> numberSuperClass = Arrays.stream(deepComponentType.getSuperTypes()).filter(superTypeItem -> superTypeItem.getCanonicalText().equals("java.lang.Number")).collect(Collectors.toList());
-                if (!numberSuperClass.isEmpty()) {
-                    return "number";
+                int arrayDimensions = psiArrayType.getArrayDimensions();
+                String firstTsTypeForArray = getFirstTsTypeForArray(project, treeLevel + 1, deepComponentType);
+
+                if (arrayDimensions > 1) {
+                    for (int i = 0; i < arrayDimensions - 1; i++) {
+                        firstTsTypeForArray += "[]";
+                    }
                 }
-                String canonicalText = deepComponentType.getCanonicalText();
-                if ("java.lang.Boolean".equals(canonicalText)) {
-                    return "boolean";
-                } else if ("java.lang.String".equals(canonicalText)) {
-                    return "string";
-                } else {
-                    return deepComponentType.getPresentableText();
-                }
+                return firstTsTypeForArray;
             } else if (type instanceof PsiClassReferenceType) {
                 // 集合
                 PsiClassReferenceType psiClassReferenceType = (PsiClassReferenceType) type;
@@ -352,20 +360,8 @@ public class TypescriptUtils {
                 } else {
                     PsiType deepComponentType = parameters[0].getDeepComponentType();
                     // 判断泛型是不是number
-                    List<PsiType> numberSuperClass = Arrays.stream(deepComponentType.getSuperTypes()).filter(superTypeItem -> superTypeItem.getCanonicalText().equals("java.lang.Number")).collect(Collectors.toList());
-                    if (!numberSuperClass.isEmpty()) {
-                        return "number";
-                    }
-                    String canonicalText = deepComponentType.getCanonicalText();
-                    if ("java.lang.Boolean".equals(canonicalText)) {
-                        return "boolean";
-                    } else if ("java.lang.String".equals(canonicalText)) {
-                        return "string";
-                    } else {
-                        // TODO 多层泛型
-
-                        return deepComponentType.getPresentableText();
-                    }
+                    String firstTsTypeForArray = getFirstTsTypeForArray(project, treeLevel + 1, deepComponentType);
+                    return firstTsTypeForArray;
                 }
             }
             return "any";
@@ -374,16 +370,53 @@ public class TypescriptUtils {
         }
     }
 
+    @NotNull
+    private static String getFirstTsTypeForArray(Project project, int treeLevel, PsiType deepComponentType) {
+        List<PsiType> numberSuperClass = Arrays.stream(deepComponentType.getSuperTypes()).filter(superTypeItem -> superTypeItem.getCanonicalText().equals("java.lang.Number")).collect(Collectors.toList());
+        if (!numberSuperClass.isEmpty()) {
+            return "number";
+        }
+        String canonicalText = deepComponentType.getCanonicalText();
+        if ("java.lang.Boolean".equals(canonicalText)) {
+            return "boolean";
+        } else if ("java.lang.String".equals(canonicalText)) {
+            return "string";
+        } else {
+            // TODO: 2023-12-06 多层
+            boolean isArrayType = CommonUtils.isArrayType(deepComponentType);
+            boolean isMapType = CommonUtils.isMapType(deepComponentType);
+            // 里头还是一层 集合
+            if (isArrayType) {
+                PsiClassReferenceType psiClassReferenceType = (PsiClassReferenceType) deepComponentType;
+                PsiType[] parameters = psiClassReferenceType.getParameters();
+                if (parameters.length == 0) {
+                    return "any[]";
+                } else {
+                    // 判断泛型是不是number
+                    String firstTsTypeForArray = getFirstTsTypeForArray(project,treeLevel + 1, parameters[0].getDeepComponentType());
+                    return firstTsTypeForArray + "[]";
+                }
+            } else if (isMapType) {
+                return deepComponentType.getPresentableText();
+            } else {
+                findClassToTsInterface(project ,treeLevel + 1, canonicalText);
+                return deepComponentType.getPresentableText();
+            }
+
+        }
+    }
+
     /**
      * 寻找 canonicalText的相关嘞
+     *
      * @param project
      * @param treeLevel
      * @param canonicalText
      */
-   private static void  findClassToTsInterface (Project project, int treeLevel,String canonicalText) {
+    private static void findClassToTsInterface(Project project, int treeLevel, String canonicalText) {
         GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
-        Integer findClassTime = canonicalText2findClassTimeMap.getOrDefault(canonicalText, 0);
-        if (findClassTime == 0) {
+        Integer findClassTimes = canonicalText2findClassTimeMap.getOrDefault(canonicalText, 0);
+        if (findClassTimes == 0) {
             PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(canonicalText, projectScope);
             if (psiClass != null) {
                 canonicalText2findClassTimeMap.put(canonicalText, 1);
