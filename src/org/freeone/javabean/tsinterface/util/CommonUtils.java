@@ -44,66 +44,7 @@ public class CommonUtils {
         return false;
     }
 
-    /**
-     * 获取数组的泛型
-     *
-     * @param field
-     * @return
-     */
-    public static String getGenericsForArray(PsiField field) {
-        if (isArray(field)) {
-            PsiType type = field.getType();
 
-            if (type instanceof PsiArrayType) {
-                // 数组 【】
-                PsiArrayType psiArrayType = (PsiArrayType) type;
-                PsiType deepComponentType = psiArrayType.getDeepComponentType();
-                List<PsiType> numberSuperClass = Arrays.stream(deepComponentType.getSuperTypes()).filter(superTypeItem -> superTypeItem.getCanonicalText().equals("java.lang.Number")).collect(Collectors.toList());
-                if (!numberSuperClass.isEmpty()) {
-                    return "number";
-                }
-                String canonicalText = deepComponentType.getCanonicalText();
-                if ("java.lang.Boolean".equals(canonicalText)) {
-                    return "boolean";
-                } else if ("java.lang.String".equals(canonicalText)) {
-                    return "string";
-                } else {
-                    return deepComponentType.getPresentableText();
-                }
-            } else if (type instanceof PsiClassReferenceType) {
-                // 集合
-                PsiClassReferenceType psiClassReferenceType = (PsiClassReferenceType) type;
-                String name = psiClassReferenceType.getName();
-                String className = psiClassReferenceType.getClassName();
-                PsiType[] parameters = psiClassReferenceType.getParameters();
-                if (parameters.length == 0) {
-                    return "any";
-                } else {
-                    PsiType deepComponentType = parameters[0].getDeepComponentType();
-                    // 判断泛型是不是number
-                    List<PsiType> numberSuperClass = Arrays.stream(deepComponentType.getSuperTypes()).filter(superTypeItem -> superTypeItem.getCanonicalText().equals("java.lang.Number")).collect(Collectors.toList());
-                    if (!numberSuperClass.isEmpty()) {
-                        return "number";
-                    }
-                    String canonicalText = deepComponentType.getCanonicalText();
-                    if ("java.lang.Boolean".equals(canonicalText)) {
-                        return "boolean";
-                    } else if ("java.lang.String".equals(canonicalText)) {
-                        return "string";
-                    } else {
-                        // TODO 多层泛型
-
-                        return deepComponentType.getPresentableText();
-                    }
-                }
-            }
-
-
-            return "any";
-        } else {
-            throw new RuntimeException("target field is not  array type");
-        }
-    }
 
     /**
      * 判断是否是 基类

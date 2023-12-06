@@ -6,10 +6,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiClassImpl;
+import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class TypescriptUtils {
 
@@ -307,27 +309,92 @@ public class TypescriptUtils {
      */
     private static void processArray(Project project, int treeLevel, StringBuilder interfaceContent, PsiField fieldItem, String fieldSplitTag) {
         // 泛型
-        String generics = CommonUtils.getGenericsForArray(fieldItem);
+        String generics = getGenericsForArray(fieldItem);
         interfaceContent.append(fieldSplitTag).append(generics);
         if (!CommonUtils.isTypescriptPrimaryType(generics)) {
             String canonicalText = CommonUtils.getJavaBeanTypeForArrayField(fieldItem);
-            GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
-            Integer findClassTime = canonicalText2findClassTimeMap.getOrDefault(canonicalText, 0);
-            if (findClassTime == 0) {
-                PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(canonicalText, projectScope);
-                if (psiClass != null) {
-                    canonicalText2findClassTimeMap.put(canonicalText, 1);
-                    PsiElement parent = psiClass.getParent();
-                    if (parent instanceof PsiJavaFile) {
-                        PsiJavaFile classParentJavaFile = (PsiJavaFile) parent;
-                        String findClassContent = generatorInterfaceContentForPsiJavaFile(project, classParentJavaFile, false, treeLevel + 1);
-                        canonicalText2TInnerClassInterfaceContent.put(canonicalText, findClassContent);
-                    }
-                }
-            }
-            canonicalText2TreeLevel.put(canonicalText, treeLevel);
+            findClassToTsInterface(project, treeLevel + 1, canonicalText);
         }
     }
 
+    /**
+     * 获取数组的泛型
+     * @param field
+     * @return
+     */
+    public static String getGenericsForArray(PsiField field) {
+        if (CommonUtils.isArray(field)) {
+            PsiType type = field.getType();
+            if (type instanceof PsiArrayType) {
+                // 数组 【】
+                PsiArrayType psiArrayType = (PsiArrayType) type;
+                PsiType deepComponentType = psiArrayType.getDeepComponentType();
+                List<PsiType> numberSuperClass = Arrays.stream(deepComponentType.getSuperTypes()).filter(superTypeItem -> superTypeItem.getCanonicalText().equals("java.lang.Number")).collect(Collectors.toList());
+                if (!numberSuperClass.isEmpty()) {
+                    return "number";
+                }
+                String canonicalText = deepComponentType.getCanonicalText();
+                if ("java.lang.Boolean".equals(canonicalText)) {
+                    return "boolean";
+                } else if ("java.lang.String".equals(canonicalText)) {
+                    return "string";
+                } else {
+                    return deepComponentType.getPresentableText();
+                }
+            } else if (type instanceof PsiClassReferenceType) {
+                // 集合
+                PsiClassReferenceType psiClassReferenceType = (PsiClassReferenceType) type;
+                String name = psiClassReferenceType.getName();
+                String className = psiClassReferenceType.getClassName();
+                PsiType[] parameters = psiClassReferenceType.getParameters();
+                if (parameters.length == 0) {
+                    return "any";
+                } else {
+                    PsiType deepComponentType = parameters[0].getDeepComponentType();
+                    // 判断泛型是不是number
+                    List<PsiType> numberSuperClass = Arrays.stream(deepComponentType.getSuperTypes()).filter(superTypeItem -> superTypeItem.getCanonicalText().equals("java.lang.Number")).collect(Collectors.toList());
+                    if (!numberSuperClass.isEmpty()) {
+                        return "number";
+                    }
+                    String canonicalText = deepComponentType.getCanonicalText();
+                    if ("java.lang.Boolean".equals(canonicalText)) {
+                        return "boolean";
+                    } else if ("java.lang.String".equals(canonicalText)) {
+                        return "string";
+                    } else {
+                        // TODO 多层泛型
 
+                        return deepComponentType.getPresentableText();
+                    }
+                }
+            }
+            return "any";
+        } else {
+            throw new RuntimeException("target field is not  array type");
+        }
+    }
+
+    /**
+     * 寻找 canonicalText的相关嘞
+     * @param project
+     * @param treeLevel
+     * @param canonicalText
+     */
+   private static void  findClassToTsInterface (Project project, int treeLevel,String canonicalText) {
+        GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
+        Integer findClassTime = canonicalText2findClassTimeMap.getOrDefault(canonicalText, 0);
+        if (findClassTime == 0) {
+            PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(canonicalText, projectScope);
+            if (psiClass != null) {
+                canonicalText2findClassTimeMap.put(canonicalText, 1);
+                PsiElement parent = psiClass.getParent();
+                if (parent instanceof PsiJavaFile) {
+                    PsiJavaFile classParentJavaFile = (PsiJavaFile) parent;
+                    String findClassContent = generatorInterfaceContentForPsiJavaFile(project, classParentJavaFile, false, treeLevel + 1);
+                    canonicalText2TInnerClassInterfaceContent.put(canonicalText, findClassContent);
+                }
+            }
+        }
+        canonicalText2TreeLevel.put(canonicalText, treeLevel);
+    }
 }
