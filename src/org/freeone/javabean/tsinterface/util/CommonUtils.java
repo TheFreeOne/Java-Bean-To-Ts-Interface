@@ -91,6 +91,7 @@ public class CommonUtils {
                     } else if ("java.lang.String".equals(canonicalText)) {
                         return "string";
                     } else {
+                        // TODO 多层泛型
 
                         return deepComponentType.getPresentableText();
                     }
@@ -104,6 +105,11 @@ public class CommonUtils {
         }
     }
 
+    /**
+     * 判断是否是 基类
+     * @param type
+     * @return
+     */
     public static boolean isTypescriptPrimaryType(String type) {
         if ("number".equals(type) || "string".equals(type) || "boolean".equals(type)) {
             return true;
@@ -140,26 +146,20 @@ public class CommonUtils {
     }
 
     public static String getJavaBeanTypeForNormalField(PsiField field) {
-
             PsiType type = field.getType();
-
             if (type instanceof PsiArrayType) {
                 // 数组 【】
                 PsiArrayType psiArrayType = (PsiArrayType) type;
                 PsiType deepComponentType = psiArrayType.getDeepComponentType();
-                String canonicalText = deepComponentType.getCanonicalText();
-                return canonicalText;
+                return deepComponentType.getCanonicalText();
             } else if (type instanceof PsiClassReferenceType) {
                 // 集合
                 PsiClassReferenceType psiClassReferenceType = (PsiClassReferenceType) type;
                 PsiType deepComponentType = psiClassReferenceType.getDeepComponentType();
-                String canonicalText = deepComponentType.getCanonicalText();
-                return canonicalText;
+                return deepComponentType.getCanonicalText();
             } else {
-
                 return "any";
             }
-
     }
 
     /**
@@ -181,6 +181,21 @@ public class CommonUtils {
         return false;
     }
 
+
+    public static boolean isMap(PsiField field) {
+        String canonicalText = field.getType().getCanonicalText();
+        if (canonicalText.contains("java.util.Map<")) {
+            return true;
+        } else {
+            PsiType[] superTypes = field.getType().getSuperTypes();
+            List<PsiType> collect = Arrays.stream(superTypes).filter(superType -> superType.getCanonicalText().contains("java.util.Map<")).collect(Collectors.toList());
+            if (!collect.isEmpty()) {
+                return true;
+            }
+            return false;
+        }
+    }
+
     public static boolean isString(PsiField field) {
         String presentableText = field.getType().getPresentableText();
         if (presentableText.equals("String")) {
@@ -197,6 +212,7 @@ public class CommonUtils {
             return false;
         }
     }
+
 
     /**
      * 判断字段是否是必须的

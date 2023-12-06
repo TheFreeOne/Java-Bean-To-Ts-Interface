@@ -27,9 +27,14 @@ public class TypescriptUtils {
      */
     private static Map<String, String> canonicalText2TInnerClassInterfaceContent = new HashMap<>(8);
 
-
-    public static final String requireSplitTag = ": ";
-    public static final String notRequireSplitTag = "?: ";
+    /**
+     * 冒号
+     */
+    public static final String REQUIRE_SPLIT_TAG = ": ";
+    /**
+     * 问好+冒号
+     */
+    public static final String NOT_REQUIRE_SPLIT_TAG = "?: ";
 
     /**
      * 移除多余的缓存
@@ -171,61 +176,30 @@ public class TypescriptUtils {
     private static void doClassInterfaceContentForTypeScript(Project project, int treeLevel, StringBuilder interfaceContent, String defaultText, PsiClass aClass,String enterTYpe) {
         String classNameAsInterfaceName = aClass.getName();
         interfaceContent.append("export ").append(defaultText).append("interface ").append(classNameAsInterfaceName).append(" {\n");
-        PsiField[] allFields = aClass.getAllFields();
-        for (int i = 0; i < allFields.length; i++) {
-            PsiField fieldItem = allFields[i];
-            String fieldSplitTag = notRequireSplitTag;
-            PsiAnnotation[] annotations = fieldItem.getAnnotations();
-            boolean fieldRequire = CommonUtils.isFieldRequire(annotations);
-            if (fieldRequire) {
-                fieldSplitTag = requireSplitTag;
+        PsiField[] fields = aClass.getAllFields();
+        for (int i = 0; i < fields.length; i++) {
+            PsiField fieldItem = fields[i];
+            // 默认将分隔标记设置成 ？：
+            String fieldSplitTag = NOT_REQUIRE_SPLIT_TAG;
+            if (CommonUtils.isFieldRequire(fieldItem.getAnnotations())) {
+                fieldSplitTag = REQUIRE_SPLIT_TAG;
             }
             // 获取注释
-            PsiDocComment docComment = fieldItem.getDocComment();
-            if (docComment != null) {
-                String docCommentText = docComment.getText();
-                if (docCommentText != null) {
-                    String[] split = docCommentText.split("\\n");
-                    for (String docCommentLine : split) {
-                        docCommentLine = docCommentLine.trim();
-                        interfaceContent.append("  ").append(docCommentLine).append("\n");
-                    }
-                }
-
-            }
-
-            String name = fieldItem.getName();
-            interfaceContent.append("  ").append(name);
+            processDocComment(interfaceContent, fieldItem);
+            String fieldName = fieldItem.getName();
+            interfaceContent.append("  ").append(fieldName);
             boolean isArray = CommonUtils.isArray(fieldItem);
             boolean isNumber = CommonUtils.isNumber(fieldItem);
             boolean isString = CommonUtils.isString(fieldItem);
             boolean isBoolean = CommonUtils.isBoolean(fieldItem);
+            boolean isMap = CommonUtils.isMap(fieldItem);
             if (isArray) {
-                // get generics
-                String generics = CommonUtils.getGenericsForArray(fieldItem);
-                interfaceContent.append(fieldSplitTag).append(generics);
-
-                if (!CommonUtils.isTypescriptPrimaryType(generics)) {
-
-                    String canonicalText = CommonUtils.getJavaBeanTypeForArrayField(fieldItem);
-//                        GlobalSearchScope globalSearchScope = GlobalSearchScope.allScope(project);
-                    GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
-                    Integer findClassTime = canonicalText2findClassTimeMap.getOrDefault(canonicalText, 0);
-                    if (findClassTime == 0) {
-                        PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(canonicalText, projectScope);
-                        if (psiClass != null) {
-                            canonicalText2findClassTimeMap.put(canonicalText, 1);
-                            PsiElement parent = psiClass.getParent();
-                            if (parent instanceof PsiJavaFile) {
-                                PsiJavaFile classParentJavaFile = (PsiJavaFile) parent;
-                                String findClassContent = generatorInterfaceContentForPsiJavaFile(project, classParentJavaFile, false, treeLevel + 1);
-                                canonicalText2TInnerClassInterfaceContent.put(canonicalText, findClassContent);
-                            }
-                        }
-                    }
-                    canonicalText2TreeLevel.put(canonicalText, treeLevel);
-
-                }
+                // 获取泛型
+                processArray(project, treeLevel, interfaceContent, fieldItem, fieldSplitTag);
+                interfaceContent.append("[]");
+            } else if (isMap) {
+                // TODO: 2023-12-06 针对map做处理
+                interfaceContent.append(fieldSplitTag).append("{[x:string]: any}");
             } else {
                 if (isNumber) {
                     interfaceContent.append(fieldSplitTag).append("number");
@@ -234,72 +208,11 @@ public class TypescriptUtils {
                 } else if (isBoolean) {
                     interfaceContent.append(fieldSplitTag).append("boolean");
                 } else {
-                    // 不需要设置:any
-//                        boolean needSetAny = true;
-                    String canonicalText = CommonUtils.getJavaBeanTypeForNormalField(fieldItem);
-                    GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
-//                        GlobalSearchScope globalSearchScope = GlobalSearchScope.allScope(project);
-
-                    Integer findClassTime = canonicalText2findClassTimeMap.getOrDefault(canonicalText, 0);
-                    if (findClassTime == 0) {
-                        PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(canonicalText, projectScope);
-                        if (psiClass != null) {
-                            PsiClass psiClassImpl = psiClass;
-                            JvmClassKind classKind = psiClassImpl.getClassKind();
-                            //  2022-08-09  ignroe ANNOTATION and  INTERFACE
-                            if (classKind != JvmClassKind.ANNOTATION && classKind != JvmClassKind.INTERFACE) {
-                                canonicalText2findClassTimeMap.put(canonicalText, 1);
-                                JvmReferenceType superClassType = psiClass.getSuperClassType();
-                                if (superClassType == null) {
-
-                                }
-                                if ("Enum".equalsIgnoreCase(superClassType.getName())) {
-                                    // Enum
-                                    PsiElement parent = psiClass.getParent();
-                                    if (parent instanceof PsiJavaFile) {
-                                        PsiJavaFile enumParentJavaFile = (PsiJavaFile) parent;
-                                        String findTypeContent = generatorTypeContent(project, enumParentJavaFile, false, treeLevel);
-                                        canonicalText2TInnerClassInterfaceContent.put(canonicalText, findTypeContent);
-                                    }
-
-
-                                } else {
-                                    // class
-                                    canonicalText2findClassTimeMap.put(canonicalText, 1);
-                                    PsiElement parent = psiClass.getParent();
-                                    // 内部类parent instanceof PsiJavaFile  ==false
-                                    if (parent instanceof PsiJavaFile) {
-                                        PsiJavaFile classParentJavaFile = (PsiJavaFile) parent;
-                                        String findClassContent = generatorInterfaceContentForPsiJavaFile(project, classParentJavaFile, false, treeLevel + 1);
-                                        canonicalText2TInnerClassInterfaceContent.put(canonicalText, findClassContent);
-                                    } else if (parent instanceof PsiClass) {
-                                        PsiClassImpl psiClassParent = (PsiClassImpl) parent;
-                                        String findClassContent = generatorInterfaceContentForPsiClass(project, psiClassParent,   psiClass, false, treeLevel + 1);
-                                        canonicalText2TInnerClassInterfaceContent.put(canonicalText, findClassContent);
-                                    }
-                                }
-                            }
-
-                        }
-                    }
-                    canonicalText2TreeLevel.put(canonicalText, treeLevel);
-
-                    if (canonicalText2TInnerClassInterfaceContent.get(canonicalText) != null) {
-                        String shortName = StringUtil.getShortName(canonicalText);
-                        interfaceContent.append(fieldSplitTag).append(shortName);
-                    } else {
-                        interfaceContent.append(fieldSplitTag).append("any");
-                    }
-
-
+                    processOtherTypes(project, treeLevel, interfaceContent, fieldItem, fieldSplitTag);
                 }
             }
-
             // end of field
-            if (isArray) {
-                interfaceContent.append("[]");
-            }
-            if (i != allFields.length - 1) {
+            if (i != fields.length - 1) {
                 // 属性之间额外空一行
                 interfaceContent.append("\n");
             }
@@ -308,6 +221,112 @@ public class TypescriptUtils {
         }
         // end of class
         interfaceContent.append("}\n");
+    }
+
+    private static void processDocComment(StringBuilder interfaceContent, PsiField fieldItem) {
+        PsiDocComment docComment = fieldItem.getDocComment();
+        if (docComment != null) {
+            String docCommentText = docComment.getText();
+            if (docCommentText != null) {
+                String[] split = docCommentText.split("\\n");
+                for (String docCommentLine : split) {
+                    docCommentLine = docCommentLine.trim();
+                    interfaceContent.append("  ").append(docCommentLine).append("\n");
+                }
+            }
+        }
+    }
+
+    private static void processOtherTypes(Project project, int treeLevel, StringBuilder interfaceContent, PsiField fieldItem, String fieldSplitTag) {
+        // 不需要设置:any
+//                        boolean needSetAny = true;
+        String canonicalText = CommonUtils.getJavaBeanTypeForNormalField(fieldItem);
+        System.out.println("canonicalText = "+ canonicalText);
+        GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
+//                        GlobalSearchScope globalSearchScope = GlobalSearchScope.allScope(project);
+
+        Integer findClassTime = canonicalText2findClassTimeMap.getOrDefault(canonicalText, 0);
+        if (findClassTime == 0) {
+            PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(canonicalText, projectScope);
+            if (psiClass != null) {
+                PsiClass psiClassImpl = psiClass;
+                JvmClassKind classKind = psiClassImpl.getClassKind();
+                //  2022-08-09  ignroe ANNOTATION and  INTERFACE
+                if (classKind != JvmClassKind.ANNOTATION && classKind != JvmClassKind.INTERFACE) {
+                    canonicalText2findClassTimeMap.put(canonicalText, 1);
+                    JvmReferenceType superClassType = psiClass.getSuperClassType();
+                    if (superClassType == null) {
+
+                    }
+                    if ("Enum".equalsIgnoreCase(superClassType.getName())) {
+                        // Enum
+                        PsiElement parent = psiClass.getParent();
+                        if (parent instanceof PsiJavaFile) {
+                            PsiJavaFile enumParentJavaFile = (PsiJavaFile) parent;
+                            String findTypeContent = generatorTypeContent(project, enumParentJavaFile, false, treeLevel);
+                            canonicalText2TInnerClassInterfaceContent.put(canonicalText, findTypeContent);
+                        }
+
+
+                    } else {
+                        // class
+                        canonicalText2findClassTimeMap.put(canonicalText, 1);
+                        PsiElement parent = psiClass.getParent();
+                        // 内部类parent instanceof PsiJavaFile  ==false
+                        if (parent instanceof PsiJavaFile) {
+                            PsiJavaFile classParentJavaFile = (PsiJavaFile) parent;
+                            String findClassContent = generatorInterfaceContentForPsiJavaFile(project, classParentJavaFile, false, treeLevel + 1);
+                            canonicalText2TInnerClassInterfaceContent.put(canonicalText, findClassContent);
+                        } else if (parent instanceof PsiClass) {
+                            PsiClassImpl psiClassParent = (PsiClassImpl) parent;
+                            String findClassContent = generatorInterfaceContentForPsiClass(project, psiClassParent,   psiClass, false, treeLevel + 1);
+                            canonicalText2TInnerClassInterfaceContent.put(canonicalText, findClassContent);
+                        }
+                    }
+                }
+
+            }
+        }
+        canonicalText2TreeLevel.put(canonicalText, treeLevel);
+
+        if (canonicalText2TInnerClassInterfaceContent.get(canonicalText) != null) {
+            String shortName = StringUtil.getShortName(canonicalText);
+            interfaceContent.append(fieldSplitTag).append(shortName);
+        } else {
+            interfaceContent.append(fieldSplitTag).append("any");
+        }
+    }
+
+    /**
+     * 处理集合数组一类的字段
+     * @param project
+     * @param treeLevel
+     * @param interfaceContent
+     * @param fieldItem
+     * @param fieldSplitTag
+     */
+    private static void processArray(Project project, int treeLevel, StringBuilder interfaceContent, PsiField fieldItem, String fieldSplitTag) {
+        // 泛型
+        String generics = CommonUtils.getGenericsForArray(fieldItem);
+        interfaceContent.append(fieldSplitTag).append(generics);
+        if (!CommonUtils.isTypescriptPrimaryType(generics)) {
+            String canonicalText = CommonUtils.getJavaBeanTypeForArrayField(fieldItem);
+            GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
+            Integer findClassTime = canonicalText2findClassTimeMap.getOrDefault(canonicalText, 0);
+            if (findClassTime == 0) {
+                PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(canonicalText, projectScope);
+                if (psiClass != null) {
+                    canonicalText2findClassTimeMap.put(canonicalText, 1);
+                    PsiElement parent = psiClass.getParent();
+                    if (parent instanceof PsiJavaFile) {
+                        PsiJavaFile classParentJavaFile = (PsiJavaFile) parent;
+                        String findClassContent = generatorInterfaceContentForPsiJavaFile(project, classParentJavaFile, false, treeLevel + 1);
+                        canonicalText2TInnerClassInterfaceContent.put(canonicalText, findClassContent);
+                    }
+                }
+            }
+            canonicalText2TreeLevel.put(canonicalText, treeLevel);
+        }
     }
 
 
