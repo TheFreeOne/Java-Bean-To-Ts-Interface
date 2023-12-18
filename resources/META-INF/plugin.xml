@@ -2,7 +2,7 @@
 <idea-plugin>
   <id>org.freeone.javabean.tsinterface</id>
   <name>Java Bean 2 TS Interface</name>
-  <version>0.0.8</version>
+  <version>0.0.9</version>
   <vendor email="free077@qq.com" url="https://github.com/TheFreeOne/Java-Bean-To-Ts-Interface">TheFreeOne</vendor>
 
   <description>
@@ -13,6 +13,7 @@
   </description>
 
   <change-notes>
+    0.0.9  Supports copying to clipboard or editing in textarea &lt;br/&gt;
     0.0.8  support string[][] , map&lt;string, string&gt; &lt;br/&gt;
     0.0.7 multi internal class support and fix same interface appears multiple times in 0.0.6 &lt;br/&gt;
     0.0.6 internal class support &lt;br/&gt;
@@ -39,12 +40,30 @@
 
 
   <actions>
+    <group id="javaBeanToTypescriptInterfaceRightClickMenu" text="(→ . →) java bean to typescript interface" description="java bean to typescript interface actions group" popup="true" >
+      <add-to-group group-id="ProjectViewPopupMenuModifyGroup" anchor="last"   />
+    </group>
     <!-- Add your actions here -->
     <action id="JavaBeanToTypescriptInterface"
             class="org.freeone.javabean.tsinterface.JavaBeanToTypescriptInterfaceAction"
-            text="(→ . →) java bean to typescript interface"
-            description="Right click on a java bean file and convert it to a typescript interface">
-      <add-to-group group-id="ProjectViewPopupMenuModifyGroup" anchor="last" />
+            text="Save To File"
+            description="Right click on a java bean file and convert it to a typescript interface and  save to file">
+      <add-to-group group-id="javaBeanToTypescriptInterfaceRightClickMenu" anchor="first"  />
+    </action>
+
+    <!-- 复制到剪切板 -->
+    <action id="JavaBeanToTypescriptInterfaceCopyToClipboard"
+            class="org.freeone.javabean.tsinterface.JavaBeanToTypescriptInterfaceAction"
+            text="Copy To Clipboard"
+            description="Right click on a java bean file and convert it to a typescript interface and copy to clipboard">
+      <add-to-group group-id="javaBeanToTypescriptInterfaceRightClickMenu" anchor="last"  />
+    </action>
+
+    <action id="JavaBeanToTypescriptInterfaceDisplayToWrapper"
+            class="org.freeone.javabean.tsinterface.JavaBeanToTypescriptInterfaceAction"
+            text="Edit At Textarea"
+            description="Right click on a java bean file and convert it to a typescript interface and show">
+      <add-to-group group-id="javaBeanToTypescriptInterfaceRightClickMenu" anchor="last"  />
     </action>
   </actions>
 

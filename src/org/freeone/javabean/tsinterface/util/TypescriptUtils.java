@@ -55,10 +55,12 @@ public class TypescriptUtils {
      * @param psiJavaFile
      * @return
      */
-    public static String generatorInterfaceContentForPsiJavaFile(Project project, PsiJavaFile psiJavaFile) {
+    public static String generatorInterfaceContentForPsiJavaFile(Project project, PsiJavaFile psiJavaFile, boolean isSaveToFile) {
         String interfaceContent;
+        // 保存到文件中就是需要default, 不然就不是
+        boolean isDefault = isSaveToFile;
         try {
-            interfaceContent = generatorInterfaceContentForPsiJavaFile(project, psiJavaFile, true, 1);
+            interfaceContent = generatorInterfaceContentForPsiJavaFile(project, psiJavaFile, isDefault, 1);
             StringBuilder stringBuilder = new StringBuilder(interfaceContent);
             //将Map转换成List
             List<Map.Entry<String, Integer>> list = new ArrayList<>(canonicalText2TreeLevel.entrySet());
