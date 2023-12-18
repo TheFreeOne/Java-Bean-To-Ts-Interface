@@ -31,7 +31,8 @@ public class TypescriptInterfaceShowerWrapper extends DialogWrapper {
 
     public void setContent(String interfaceContent) {
         if (typescriptInterfaceContentDisplayPanel != null && interfaceContent != null) {
-            typescriptInterfaceContentDisplayPanel.getTextArea().setText(interfaceContent);
+            JTextArea textArea = typescriptInterfaceContentDisplayPanel.getTextArea();
+            textArea.setText(interfaceContent);
         }
     }
 

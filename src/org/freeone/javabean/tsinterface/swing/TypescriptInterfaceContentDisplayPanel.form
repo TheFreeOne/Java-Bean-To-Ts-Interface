@@ -21,7 +21,7 @@
             <constraints/>
             <properties>
               <editable value="true"/>
-              <font name="Consolas"/>
+              <font/>
             </properties>
           </component>
         </children>
