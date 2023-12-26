@@ -167,6 +167,21 @@ public class CommonUtils {
         return false;
     }
 
+    public static boolean isJavaUtilDate(PsiField field) {
+        String canonicalText = field.getType().getCanonicalText();
+        if (canonicalText.equals("java.util.Date")) {
+            return true;
+        }
+        return false;
+    }
+
+
+    public static boolean isJavaUtilDateType(PsiType psiType) {
+        return psiType.getCanonicalText().equals("java.util.Date");
+    }
+
+
+
     public static boolean isBoolean(PsiField field) {
         String canonicalText = field.getType().getCanonicalText();
         if ("java.lang.Boolean".equals(canonicalText) || "boolean".equals(canonicalText)) {

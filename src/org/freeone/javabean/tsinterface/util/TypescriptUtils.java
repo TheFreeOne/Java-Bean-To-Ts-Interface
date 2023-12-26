@@ -9,6 +9,7 @@ import com.intellij.psi.impl.source.PsiClassImpl;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
+import org.freeone.javabean.tsinterface.setting.JavaBeanToTypescriptInterfaceSettingsState;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -201,16 +202,20 @@ public class TypescriptUtils {
             boolean isNumber = CommonUtils.isNumber(fieldItem);
             boolean isString = CommonUtils.isString(fieldItem);
             boolean isBoolean = CommonUtils.isBoolean(fieldItem);
+            boolean isJavaUtilDate = CommonUtils.isJavaUtilDate(fieldItem);
             boolean isMap = CommonUtils.isMap(fieldItem);
             if (isArray) {
                 // 获取泛型
                 processArray(project, treeLevel, interfaceContent, fieldItem, fieldSplitTag);
 
             } else if (isMap) {
-                // TODO: 2023-12-06 针对map做处理
+                //  : 2023-12-06 针对map做处理
                 processMap(project, treeLevel, interfaceContent, fieldItem, fieldSplitTag);
 
-            } else {
+            } else if (isJavaUtilDate && JavaBeanToTypescriptInterfaceSettingsState.getInstance().enableDataToString) {
+
+                interfaceContent.append(fieldSplitTag).append("string");
+            } else{
                 if (isNumber) {
                     interfaceContent.append(fieldSplitTag).append("number");
                 } else if (isString) {

@@ -2,7 +2,7 @@
 <idea-plugin>
   <id>org.freeone.javabean.tsinterface</id>
   <name>Java Bean 2 TS Interface</name>
-  <version>0.0.9</version>
+  <version>0.0.10</version>
   <vendor email="free077@qq.com" url="https://github.com/TheFreeOne/Java-Bean-To-Ts-Interface">TheFreeOne</vendor>
 
   <description>
@@ -13,6 +13,7 @@
   </description>
 
   <change-notes>
+    0.0.10 enable Data to String, needs to be enabled in setting &lt;br/&gt;
     0.0.9  Supports copying to clipboard or editing in textarea &lt;br/&gt;
     0.0.8  support string[][] , map&lt;string, string&gt; &lt;br/&gt;
     0.0.7 multi internal class support and fix same interface appears multiple times in 0.0.6 &lt;br/&gt;
@@ -36,6 +37,14 @@
     <notificationGroup id="Custom Notification Group"
                        displayType="BALLOON"
                        key="notification.group.name"/>
+    <applicationService
+            serviceImplementation="org.freeone.javabean.tsinterface.setting.JavaBeanToTypescriptInterfaceSettingsState"/>
+
+    <!--            parentId="tools"-->
+    <applicationConfigurable
+            instance="org.freeone.javabean.tsinterface.setting.JavaBeanToTypescriptInterfaceSettingsConfigurable"
+            id="org.freeone.javabean.tsinterface.setting.JavaBeanToTypescriptInterfaceSettingsConfigurable"
+            displayName="Java Bean To Ts Interface Settings"/>
   </extensions>
 
 
