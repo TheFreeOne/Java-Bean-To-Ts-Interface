@@ -1,12 +1,17 @@
 package org.freeone.javabean.tsinterface.util;
 
 import com.intellij.lang.jvm.JvmClassKind;
+import com.intellij.lang.jvm.annotation.JvmAnnotationAttribute;
+import com.intellij.lang.jvm.annotation.JvmAnnotationAttributeValue;
 import com.intellij.lang.jvm.types.JvmReferenceType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiClassImpl;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
+import com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl;
+import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
+import com.intellij.psi.impl.source.tree.java.PsiNameValuePairImpl;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.freeone.javabean.tsinterface.setting.JavaBeanToTypescriptInterfaceSettingsState;
@@ -197,6 +202,14 @@ public class TypescriptUtils {
             // 获取注释
             processDocComment(interfaceContent, fieldItem);
             String fieldName = fieldItem.getName();
+
+            //  2023-12-26 判断是或否使用JsonProperty
+            if(JavaBeanToTypescriptInterfaceSettingsState.getInstance().useAnnotationJsonProperty) {
+                String jsonPropertyValue = getJsonPropertyValue(fieldItem);
+                if (jsonPropertyValue != null) {
+                    fieldName = jsonPropertyValue;
+                }
+            }
             interfaceContent.append("  ").append(fieldName);
             boolean isArray = CommonUtils.isArray(fieldItem);
             boolean isNumber = CommonUtils.isNumber(fieldItem);
@@ -236,6 +249,33 @@ public class TypescriptUtils {
         }
         // end of class
         interfaceContent.append("}\n");
+    }
+
+    private static String getJsonPropertyValue(PsiField fieldItem) {
+        String result = null;
+        PsiAnnotation[] annotations = fieldItem.getAnnotations();
+        for (PsiAnnotation annotation : annotations) {
+            if(annotation instanceof  PsiAnnotationImpl) {
+                PsiAnnotationImpl psiAnnotationImpl = (PsiAnnotationImpl) annotation;
+                String qualifiedName = psiAnnotationImpl.getQualifiedName();
+                if (qualifiedName != null && qualifiedName.equals("com.fasterxml.jackson.annotation.JsonProperty")) {
+                    for (JvmAnnotationAttribute attribute : psiAnnotationImpl.getAttributes()) {
+                        if ("value".equals(attribute.getAttributeName())  && attribute.getAttributeValue() != null ) {
+                            if (attribute instanceof PsiNameValuePairImpl) {
+                                PsiNameValuePairImpl psiNameValuePair = (PsiNameValuePairImpl) attribute;
+                                String literalValue = psiNameValuePair.getLiteralValue();
+                                if (literalValue != null && literalValue.trim().length() > 0) {
+                                    result = literalValue;
+                                }
+                            }
+
+                        }
+                    }
+                }
+            }
+
+        }
+        return result;
     }
 
     private static void processDocComment(StringBuilder interfaceContent, PsiField fieldItem) {

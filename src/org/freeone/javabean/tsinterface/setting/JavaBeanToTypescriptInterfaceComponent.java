@@ -5,6 +5,7 @@ import javax.swing.*;
 public class JavaBeanToTypescriptInterfaceComponent {
     private JPanel jPanel;
     private JCheckBox dateToStringCheckBox;
+    private JCheckBox useJsonPropertyCheckBox;
 
     public JPanel getJPanel() {
         return jPanel;
@@ -12,5 +13,9 @@ public class JavaBeanToTypescriptInterfaceComponent {
 
     public JCheckBox getDateToStringCheckBox() {
         return dateToStringCheckBox;
+    }
+
+    public JCheckBox getUseJsonPropertyCheckBox() {
+        return useJsonPropertyCheckBox;
     }
 }

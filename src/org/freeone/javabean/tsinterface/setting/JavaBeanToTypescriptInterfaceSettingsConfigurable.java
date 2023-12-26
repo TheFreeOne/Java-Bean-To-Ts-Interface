@@ -24,7 +24,6 @@ final class JavaBeanToTypescriptInterfaceSettingsConfigurable implements Configu
     }
 
 
-
     @Nullable
     @Override
     public JComponent createComponent() {
@@ -35,8 +34,8 @@ final class JavaBeanToTypescriptInterfaceSettingsConfigurable implements Configu
     @Override
     public boolean isModified() {
         JavaBeanToTypescriptInterfaceSettingsState settings = JavaBeanToTypescriptInterfaceSettingsState.getInstance();
-        boolean modified = false;
-        modified |= settings.enableDataToString != mySettingsComponent.getDateToStringCheckBox().isSelected();
+        boolean modified = settings.enableDataToString != mySettingsComponent.getDateToStringCheckBox().isSelected();
+        modified |= settings.useAnnotationJsonProperty != mySettingsComponent.getUseJsonPropertyCheckBox().isSelected();
         return modified;
 
     }
@@ -45,6 +44,7 @@ final class JavaBeanToTypescriptInterfaceSettingsConfigurable implements Configu
     public void apply() {
         JavaBeanToTypescriptInterfaceSettingsState settings = JavaBeanToTypescriptInterfaceSettingsState.getInstance();
         settings.setEnableDataToString(mySettingsComponent.getDateToStringCheckBox().isSelected());
+        settings.setUseAnnotationJsonProperty(mySettingsComponent.getUseJsonPropertyCheckBox().isSelected());
     }
 
 
@@ -52,6 +52,7 @@ final class JavaBeanToTypescriptInterfaceSettingsConfigurable implements Configu
     public void reset() {
         JavaBeanToTypescriptInterfaceSettingsState settings = JavaBeanToTypescriptInterfaceSettingsState.getInstance();
         mySettingsComponent.getDateToStringCheckBox().setSelected(settings.enableDataToString);
+        mySettingsComponent.getUseJsonPropertyCheckBox().setSelected(settings.useAnnotationJsonProperty);
     }
 
     @Override

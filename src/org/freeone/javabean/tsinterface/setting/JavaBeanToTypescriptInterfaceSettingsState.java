@@ -26,13 +26,15 @@ import org.jetbrains.annotations.Nullable;
 
     public boolean enableDataToString = false;
 
+    public boolean useAnnotationJsonProperty = false;
+
 
 
     public static JavaBeanToTypescriptInterfaceSettingsState getInstance() {
         return ApplicationManager.getApplication().getService(JavaBeanToTypescriptInterfaceSettingsState.class);
     }
 
-    @Nullable
+    @NotNull
     @Override
     public JavaBeanToTypescriptInterfaceSettingsState getState() {
         return this;
@@ -43,9 +45,15 @@ import org.jetbrains.annotations.Nullable;
         XmlSerializerUtil.copyBean(state, this);
     }
 
+    public boolean getUseAnnotationJsonProperty() {
+        return useAnnotationJsonProperty;
+    }
 
+    public void setUseAnnotationJsonProperty(boolean useAnnotationJsonProperty) {
+        this.useAnnotationJsonProperty = useAnnotationJsonProperty;
+    }
 
-    public boolean isEnableDataToString() {
+    public boolean getEnableDataToString() {
         return enableDataToString;
     }
 

@@ -2,7 +2,7 @@
 <idea-plugin>
   <id>org.freeone.javabean.tsinterface</id>
   <name>Java Bean 2 TS Interface</name>
-  <version>0.0.10</version>
+  <version>0.0.11</version>
   <vendor email="free077@qq.com" url="https://github.com/TheFreeOne/Java-Bean-To-Ts-Interface">TheFreeOne</vendor>
 
   <description>
@@ -13,6 +13,7 @@
   </description>
 
   <change-notes>
+    0.0.11 enable @JsonProperty, needs to be enabled in setting &lt;br/&gt;
     0.0.10 enable Data to String, needs to be enabled in setting &lt;br/&gt;
     0.0.9  Supports copying to clipboard or editing in textarea &lt;br/&gt;
     0.0.8  support string[][] , map&lt;string, string&gt; &lt;br/&gt;
@@ -34,9 +35,9 @@
   <depends>com.intellij.modules.platform</depends>
 
   <extensions defaultExtensionNs="com.intellij">
-    <notificationGroup id="Custom Notification Group"
-                       displayType="BALLOON"
-                       key="notification.group.name"/>
+<!--    <notificationGroup id="Custom Notification Group"-->
+<!--                       displayType="BALLOON"-->
+<!--                       key="notification.group.name"/>-->
     <applicationService
             serviceImplementation="org.freeone.javabean.tsinterface.setting.JavaBeanToTypescriptInterfaceSettingsState"/>
 
@@ -49,7 +50,7 @@
 
 
   <actions>
-    <group id="javaBeanToTypescriptInterfaceRightClickMenu" text="(→ . →) java bean to typescript interface" description="java bean to typescript interface actions group" popup="true" >
+    <group id="javaBeanToTypescriptInterfaceRightClickMenu" text="(→ . →) Java Bean to Typescript Interface" description="Java bean to typescript interface actions group" popup="true" >
       <add-to-group group-id="ProjectViewPopupMenuModifyGroup" anchor="last"   />
     </group>
     <!-- Add your actions here -->
