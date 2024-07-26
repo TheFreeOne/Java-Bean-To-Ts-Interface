@@ -10,6 +10,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.PsiClassImpl;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl;
 
@@ -44,18 +45,18 @@ public class CommonUtils {
         return false;
     }
 
-    public  static boolean isNumberType(PsiType psiType) {
+    public static boolean isNumberType(PsiType psiType) {
         return Arrays.stream(psiType.getSuperTypes()).anyMatch(ele -> ele.getCanonicalText().contains("java.lang.Number"));
     }
 
-    public  static boolean isStringType(PsiType psiType) {
+    public static boolean isStringType(PsiType psiType) {
         return Arrays.stream(psiType.getSuperTypes()).anyMatch(ele -> ele.getCanonicalText().contains("java.lang.CharSequence"));
     }
 
 
-
     /**
      * 判断是否是 基类
+     *
      * @param type
      * @return
      */
@@ -95,20 +96,20 @@ public class CommonUtils {
     }
 
     public static String getJavaBeanTypeForNormalField(PsiField field) {
-            PsiType type = field.getType();
-            if (type instanceof PsiArrayType) {
-                // 数组 【】
-                PsiArrayType psiArrayType = (PsiArrayType) type;
-                PsiType deepComponentType = psiArrayType.getDeepComponentType();
-                return deepComponentType.getCanonicalText();
-            } else if (type instanceof PsiClassReferenceType) {
-                // 集合
-                PsiClassReferenceType psiClassReferenceType = (PsiClassReferenceType) type;
-                PsiType deepComponentType = psiClassReferenceType.getDeepComponentType();
-                return deepComponentType.getCanonicalText();
-            } else {
-                return "any";
-            }
+        PsiType type = field.getType();
+        if (type instanceof PsiArrayType) {
+            // 数组 【】
+            PsiArrayType psiArrayType = (PsiArrayType) type;
+            PsiType deepComponentType = psiArrayType.getDeepComponentType();
+            return deepComponentType.getCanonicalText();
+        } else if (type instanceof PsiClassReferenceType) {
+            // 集合
+            PsiClassReferenceType psiClassReferenceType = (PsiClassReferenceType) type;
+            PsiType deepComponentType = psiClassReferenceType.getDeepComponentType();
+            return deepComponentType.getCanonicalText();
+        } else {
+            return "any";
+        }
     }
 
     /**
@@ -132,6 +133,7 @@ public class CommonUtils {
 
     /**
      * psiType是否是数组
+     *
      * @param psiType
      * @return
      */
@@ -155,7 +157,7 @@ public class CommonUtils {
     }
 
     public static boolean isMapType(PsiType psiType) {
-        return psiType.getCanonicalText().contains("java.util.Map") ||   Arrays.stream(psiType.getSuperTypes()).filter(superType -> superType.getCanonicalText().contains("java.util.Map")).count() > 0;
+        return psiType.getCanonicalText().contains("java.util.Map") || Arrays.stream(psiType.getSuperTypes()).filter(superType -> superType.getCanonicalText().contains("java.util.Map")).count() > 0;
     }
 
 
@@ -179,7 +181,6 @@ public class CommonUtils {
     public static boolean isJavaUtilDateType(PsiType psiType) {
         return psiType.getCanonicalText().equals("java.util.Date");
     }
-
 
 
     public static boolean isBoolean(PsiField field) {
@@ -302,5 +303,26 @@ public class CommonUtils {
             singleFolderDescriptor.setDescription(description);
         }
         return singleFolderDescriptor;
+    }
+
+    public static boolean isInnerPublicClass(PsiJavaFile psiJavaFile, PsiClassImpl psiClass) {
+        PsiClass[] classes = psiJavaFile.getClasses();
+        String targetQualifiedName = psiClass.getQualifiedName();
+        // 暂时仅支持只有公共类的方式，其他的骚操作后见再说
+        if (classes.length == 1) {
+            PsiClass mainClass = classes[0];
+            String mainClassQualifiedName = mainClass.getQualifiedName();
+            // 内部的public static class和外面的public class肯定不同
+            if (targetQualifiedName != null && mainClassQualifiedName != null && !targetQualifiedName.equals(mainClassQualifiedName)) {
+                PsiClass[] innerClasses = mainClass.getInnerClasses();
+                for (PsiClass innerClass : innerClasses) {
+                    String qualifiedNameOfInnerClass = innerClass.getQualifiedName();
+                    if (targetQualifiedName.equals(qualifiedNameOfInnerClass)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 }

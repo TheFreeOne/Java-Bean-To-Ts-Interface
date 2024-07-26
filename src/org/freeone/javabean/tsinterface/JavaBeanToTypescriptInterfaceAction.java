@@ -12,9 +12,9 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.source.PsiClassImpl;
+import org.freeone.javabean.tsinterface.swing.SampleDialogWrapper;
 import org.freeone.javabean.tsinterface.swing.TypescriptInterfaceShowerWrapper;
 import org.freeone.javabean.tsinterface.util.CommonUtils;
 import org.freeone.javabean.tsinterface.util.TypescriptUtils;
@@ -37,7 +37,7 @@ public class JavaBeanToTypescriptInterfaceAction extends AnAction {
     public static final String requireSplitTag = ": ";
     public static final String notRequireSplitTag = "?: ";
 
-    private NotificationGroup notificationGroup = new NotificationGroup("JavaBeanToTypescriptInterface", NotificationDisplayType.STICKY_BALLOON, true);
+    private final NotificationGroup notificationGroup = new NotificationGroup("JavaBeanToTypescriptInterface", NotificationDisplayType.STICKY_BALLOON, true);
 
     @Override
     public void actionPerformed(AnActionEvent e) {
@@ -70,59 +70,86 @@ public class JavaBeanToTypescriptInterfaceAction extends AnAction {
             final String path = target.getPath();
             PsiManager psiMgr = PsiManager.getInstance(project);
             PsiFile file = psiMgr.findFile(target);
+
+            PsiElement psiElement = e.getData(PlatformDataKeys.PSI_ELEMENT);
+
             if (file instanceof PsiJavaFile ) {
                 PsiJavaFile psiJavaFile = (PsiJavaFile) file;
+                if (psiElement instanceof PsiClassImpl) {
+                    PsiClassImpl psiClass = (PsiClassImpl) psiElement;
+                    boolean innerPublicClass = CommonUtils.isInnerPublicClass(psiJavaFile, psiClass);
+                    if (innerPublicClass){
+                        SampleDialogWrapper sampleDialogWrapper = new SampleDialogWrapper();
+                        boolean b = sampleDialogWrapper.showAndGet();
+                        if (b) {
+                            // 只有内部public static class 会执行这一步
+                            String interfaceContent = TypescriptUtils.generatorInterfaceContentForPsiClassElement(project, psiClass, isSaveToFile);
+                            generateTypescriptContent(e, project, isSaveToFile, psiJavaFile, interfaceContent);
+                            return ;
+                        }
+                    }
+                }
+
+                // 正常情况下
                 // 声明文件的主要内容 || content of *.d.ts
                 String interfaceContent = TypescriptUtils.generatorInterfaceContentForPsiJavaFile(project, psiJavaFile, isSaveToFile);
-                if (isSaveToFile) {
-                    FileChooserDescriptor chooserDescriptor = CommonUtils.createFileChooserDescriptor("Choose a folder", "The declaration file end with '.d.ts' will be saved in this folder");
-                    VirtualFile savePathFile = FileChooser.chooseFile(chooserDescriptor, null, null);
-                    if (savePathFile != null && savePathFile.isDirectory()){
-                        String savePath = savePathFile.getPath();
-                        String nameWithoutExtension = psiJavaFile.getVirtualFile().getNameWithoutExtension();
-                        String interfaceFileSavePath = savePath + "/" + nameWithoutExtension+".d.ts";
-                        try {
-                            BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(interfaceFileSavePath,false), StandardCharsets.UTF_8));
-                            bufferedWriter.write(interfaceContent);
-                            bufferedWriter.close();
-
-                            Notification notification = notificationGroup.createNotification("The target file was saved to:  " + interfaceFileSavePath, NotificationType.INFORMATION);
-                            notification.setImportant(true).notify(project);
-                        } catch (IOException ioException) {
-                            ioException.printStackTrace();
-                        }
-                    }
-                } else {
-                    try {
-                        String text = e.getPresentation().getText();
-                        if (text != null && text.toLowerCase().startsWith("copy")) {
-                            Clipboard systemClipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-                            Transferable tText = new StringSelection(interfaceContent);
-                            systemClipboard.setContents(tText, null);
-                            Notification notification = notificationGroup.createNotification("Copy To Clipboard Completed" , NotificationType.INFORMATION);
-                            notification.setImportant(false).notify(project);
-                        } else {
-                            TypescriptInterfaceShowerWrapper typescriptInterfaceShowerWrapper = new TypescriptInterfaceShowerWrapper();
-                            typescriptInterfaceShowerWrapper.setContent(interfaceContent);
-                            typescriptInterfaceShowerWrapper.setOKActionEnabled(false);
-
-                            typescriptInterfaceShowerWrapper.setSize(500, 600);
-//                            typescriptInterfaceShowerWrapper.getWindow().setMaximumSize(new Dimension(500, 600));
-                            typescriptInterfaceShowerWrapper.show();
-                        }
-                    } catch (Exception exception) {
-                        exception.printStackTrace();
-                    }
-
-
-
-
-                }
+                generateTypescriptContent(e, project, isSaveToFile, psiJavaFile, interfaceContent);
 
             }
 
         } else {
             Messages.showInfoMessage("Please choose a Java Bean", "");
+        }
+    }
+
+    /**
+     * 针对interfaceContent进行处理，生成内容生成内容
+     * @param e
+     * @param project
+     * @param saveToFile
+     * @param psiJavaFile
+     * @param interfaceContent
+     */
+    private void generateTypescriptContent(AnActionEvent e, Project project, boolean saveToFile, PsiJavaFile psiJavaFile, String interfaceContent) {
+        if (saveToFile) {
+            FileChooserDescriptor chooserDescriptor = CommonUtils.createFileChooserDescriptor("Choose a folder", "The declaration file end with '.d.ts' will be saved in this folder");
+            VirtualFile savePathFile = FileChooser.chooseFile(chooserDescriptor, null, null);
+            if (savePathFile != null && savePathFile.isDirectory()) {
+                String savePath = savePathFile.getPath();
+                String nameWithoutExtension = psiJavaFile.getVirtualFile().getNameWithoutExtension();
+                String interfaceFileSavePath = savePath + "/" + nameWithoutExtension + ".d.ts";
+                try {
+                    BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(interfaceFileSavePath, false), StandardCharsets.UTF_8));
+                    bufferedWriter.write(interfaceContent);
+                    bufferedWriter.close();
+                    Notification notification = notificationGroup.createNotification("The target file was saved to:  " + interfaceFileSavePath, NotificationType.INFORMATION);
+                    notification.setImportant(true).notify(project);
+                } catch (IOException ioException) {
+                    ioException.printStackTrace();
+                }
+            }
+        } else {
+            try {
+                // 获取当前菜单那的文本
+                String text = e.getPresentation().getText();
+                // 复制到剪切板
+                if (text != null && text.toLowerCase().startsWith("copy")) {
+                    Clipboard systemClipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+                    Transferable tText = new StringSelection(interfaceContent);
+                    systemClipboard.setContents(tText, null);
+                    Notification notification = notificationGroup.createNotification("Copy To Clipboard Completed", NotificationType.INFORMATION);
+                    notification.setImportant(false).notify(project);
+                } else {
+                    // 在textarea进行编辑展示
+                    TypescriptInterfaceShowerWrapper typescriptInterfaceShowerWrapper = new TypescriptInterfaceShowerWrapper();
+                    typescriptInterfaceShowerWrapper.setContent(interfaceContent);
+                    typescriptInterfaceShowerWrapper.setOKActionEnabled(false);
+                    typescriptInterfaceShowerWrapper.setSize(500, 600);
+                    typescriptInterfaceShowerWrapper.show();
+                }
+            } catch (Exception exception) {
+                exception.printStackTrace();
+            }
         }
     }
 }

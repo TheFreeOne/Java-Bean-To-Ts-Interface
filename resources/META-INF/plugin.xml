@@ -2,14 +2,14 @@
 <idea-plugin>
   <id>org.freeone.javabean.tsinterface</id>
   <name>Java Bean 2 TS Interface</name>
-  <version>0.0.12</version>
+  <version>0.0.13</version>
   <vendor email="free077@qq.com" url="https://github.com/TheFreeOne/Java-Bean-To-Ts-Interface">TheFreeOne</vendor>
 
   <description>
     Adds support for converting a java bean file to typescript interface file &lt;br/&gt;
     Usage instructions : After this plugin is installed, right click on a java bean file or a java entity file, click a menu item called '(→ . →) java bean to typescript interface',
     choose a folder to save the ts interface file, then open the folder and check the result file   &lt;br/&gt;
-	
+
 	 &lt;pre&gt;&lt;span class="pl-k"&gt;public&lt;/span&gt; &lt;span class="pl-k"&gt;class&lt;/span&gt; &lt;span class="pl-smi"&gt;TestRequest&lt;/span&gt; {
       &lt;span class="pl-c"&gt;/**&lt;/span&gt;
       &lt;span class="pl-c"&gt;     * name list&lt;/span&gt;
@@ -36,11 +36,12 @@
 
       &lt;span class="pl-c1"&gt;isSuccess&lt;/span&gt;?: &lt;span class="pl-smi"&gt;boolean&lt;/span&gt;
       &lt;span class="pl-kos"&gt;}&lt;/span&gt;&lt;/pre&gt;
-	
+
     &lt;a href="https://github.com/TheFreeOne/Java-Bean-To-Ts-Interface/blob/main/README.md" target="_blank"&gt;more information&lt;/a&gt;
   </description>
 
   <change-notes>
+    0.0.13 support inner public static class 支持内部公共静态类 &lt;br/&gt;
     0.0.12 update description &lt;br/&gt;
     0.0.11 enable @JsonProperty, needs to be enabled in setting;  &lt;br/&gt;
     0.0.10 enable Data to String, needs to be enabled in setting &lt;br/&gt;
