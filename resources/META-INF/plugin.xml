@@ -2,7 +2,7 @@
 <idea-plugin>
   <id>org.freeone.javabean.tsinterface</id>
   <name>Java Bean 2 TS Interface</name>
-  <version>0.0.13</version>
+  <version>0.0.14</version>
   <vendor email="free077@qq.com" url="https://github.com/TheFreeOne/Java-Bean-To-Ts-Interface">TheFreeOne</vendor>
 
   <description>
@@ -41,6 +41,7 @@
   </description>
 
   <change-notes>
+    0.0.14 fix the file name when use inner public static class  修复使用内部公共静态类时的文件名 &lt;br/&gt;
     0.0.13 support inner public static class 支持内部公共静态类 &lt;br/&gt;
     0.0.12 update description &lt;br/&gt;
     0.0.11 enable @JsonProperty, needs to be enabled in setting;  &lt;br/&gt;

@@ -84,7 +84,7 @@ public class JavaBeanToTypescriptInterfaceAction extends AnAction {
                         if (b) {
                             // 只有内部public static class 会执行这一步
                             String interfaceContent = TypescriptUtils.generatorInterfaceContentForPsiClassElement(project, psiClass, isSaveToFile);
-                            generateTypescriptContent(e, project, isSaveToFile, psiJavaFile, interfaceContent);
+                            generateTypescriptContent(e, project, isSaveToFile, psiClass.getName(), interfaceContent);
                             return ;
                         }
                     }
@@ -93,7 +93,7 @@ public class JavaBeanToTypescriptInterfaceAction extends AnAction {
                 // 正常情况下
                 // 声明文件的主要内容 || content of *.d.ts
                 String interfaceContent = TypescriptUtils.generatorInterfaceContentForPsiJavaFile(project, psiJavaFile, isSaveToFile);
-                generateTypescriptContent(e, project, isSaveToFile, psiJavaFile, interfaceContent);
+                generateTypescriptContent(e, project, isSaveToFile, psiJavaFile.getVirtualFile().getNameWithoutExtension(), interfaceContent);
 
             }
 
@@ -110,14 +110,13 @@ public class JavaBeanToTypescriptInterfaceAction extends AnAction {
      * @param psiJavaFile
      * @param interfaceContent
      */
-    private void generateTypescriptContent(AnActionEvent e, Project project, boolean saveToFile, PsiJavaFile psiJavaFile, String interfaceContent) {
+    private void generateTypescriptContent(AnActionEvent e, Project project, boolean saveToFile, String fileNameToSave, String interfaceContent) {
         if (saveToFile) {
             FileChooserDescriptor chooserDescriptor = CommonUtils.createFileChooserDescriptor("Choose a folder", "The declaration file end with '.d.ts' will be saved in this folder");
             VirtualFile savePathFile = FileChooser.chooseFile(chooserDescriptor, null, null);
             if (savePathFile != null && savePathFile.isDirectory()) {
                 String savePath = savePathFile.getPath();
-                String nameWithoutExtension = psiJavaFile.getVirtualFile().getNameWithoutExtension();
-                String interfaceFileSavePath = savePath + "/" + nameWithoutExtension + ".d.ts";
+                String interfaceFileSavePath = savePath + "/" + fileNameToSave + ".d.ts";
                 try {
                     BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(interfaceFileSavePath, false), StandardCharsets.UTF_8));
                     bufferedWriter.write(interfaceContent);
