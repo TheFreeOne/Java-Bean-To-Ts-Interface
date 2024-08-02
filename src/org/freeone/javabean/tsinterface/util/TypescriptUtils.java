@@ -2,7 +2,6 @@ package org.freeone.javabean.tsinterface.util;
 
 import com.intellij.lang.jvm.JvmClassKind;
 import com.intellij.lang.jvm.annotation.JvmAnnotationAttribute;
-import com.intellij.lang.jvm.annotation.JvmAnnotationAttributeValue;
 import com.intellij.lang.jvm.types.JvmReferenceType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -10,7 +9,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiClassImpl;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl;
-import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.intellij.psi.impl.source.tree.java.PsiNameValuePairImpl;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -58,7 +56,7 @@ public class TypescriptUtils {
         StringBuilder interfaceContent;
         // 保存到文件中就是需要default, 不然就不是
         try {
-              interfaceContent = new StringBuilder();
+            interfaceContent = new StringBuilder();
             String defaultText = "";
             if (saveToAFile) {
                 defaultText = "default ";
@@ -208,7 +206,9 @@ public class TypescriptUtils {
         PsiClass[] classes = psiClassInParameters.getInnerClasses();
         // 内部内部类可能重新查询多次
         PsiClass innerClassByName = psiClassInParameters.findInnerClassByName(targetPsiClass.getName(), true);
-        doClassInterfaceContentForTypeScript(project, treeLevel, interfaceContent, defaultText, innerClassByName, "CLASS");
+        if (innerClassByName != null) {
+            doClassInterfaceContentForTypeScript(project, treeLevel, interfaceContent, defaultText, innerClassByName, "CLASS");
+        }
 //        for (PsiClass aClass : classes) {
 //            doClassInterfaceContentForTypeScript(project, treeLevel, interfaceContent, defaultText, aClass,"CLASS");
 //        }
@@ -240,7 +240,7 @@ public class TypescriptUtils {
             String fieldName = fieldItem.getName();
 
             //  2023-12-26 判断是或否使用JsonProperty
-            if(JavaBeanToTypescriptInterfaceSettingsState.getInstance().useAnnotationJsonProperty) {
+            if (JavaBeanToTypescriptInterfaceSettingsState.getInstance().useAnnotationJsonProperty) {
                 String jsonPropertyValue = getJsonPropertyValue(fieldItem);
                 if (jsonPropertyValue != null) {
                     fieldName = jsonPropertyValue;
@@ -264,7 +264,7 @@ public class TypescriptUtils {
             } else if (isJavaUtilDate && JavaBeanToTypescriptInterfaceSettingsState.getInstance().enableDataToString) {
 
                 interfaceContent.append(fieldSplitTag).append("string");
-            } else{
+            } else {
                 if (isNumber) {
                     interfaceContent.append(fieldSplitTag).append("number");
                 } else if (isString) {
@@ -291,12 +291,12 @@ public class TypescriptUtils {
         String result = null;
         PsiAnnotation[] annotations = fieldItem.getAnnotations();
         for (PsiAnnotation annotation : annotations) {
-            if(annotation instanceof  PsiAnnotationImpl) {
+            if (annotation instanceof PsiAnnotationImpl) {
                 PsiAnnotationImpl psiAnnotationImpl = (PsiAnnotationImpl) annotation;
                 String qualifiedName = psiAnnotationImpl.getQualifiedName();
                 if (qualifiedName != null && qualifiedName.equals("com.fasterxml.jackson.annotation.JsonProperty")) {
                     for (JvmAnnotationAttribute attribute : psiAnnotationImpl.getAttributes()) {
-                        if ("value".equals(attribute.getAttributeName())  && attribute.getAttributeValue() != null ) {
+                        if ("value".equals(attribute.getAttributeName()) && attribute.getAttributeValue() != null) {
                             if (attribute instanceof PsiNameValuePairImpl) {
                                 PsiNameValuePairImpl psiNameValuePair = (PsiNameValuePairImpl) attribute;
                                 String literalValue = psiNameValuePair.getLiteralValue();
@@ -361,11 +361,11 @@ public class TypescriptUtils {
                     } else {
                         GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
                         PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(vType.getCanonicalText(), projectScope);
-                        if (psiClass ==null) {
+                        if (psiClass == null) {
                             defaultVType = "any";
                         } else {
                             defaultVType = vType.getPresentableText();
-                            findClassToTsInterface(project, treeLevel +1, vType.getCanonicalText());
+                            findClassToTsInterface(project, treeLevel + 1, vType.getCanonicalText());
                         }
 
 
@@ -374,11 +374,10 @@ public class TypescriptUtils {
                 }
 
 
-
             }
 
         }
-        interfaceContent.append(fieldSplitTag).append("{[x:"+defaultKTYpe+"]: "+defaultVType+"}");
+        interfaceContent.append(fieldSplitTag).append("{[x:" + defaultKTYpe + "]: " + defaultVType + "}");
     }
 
     private static void processOtherTypes(Project project, int treeLevel, StringBuilder interfaceContent, PsiField fieldItem, String fieldSplitTag) {
@@ -466,6 +465,7 @@ public class TypescriptUtils {
 
     /**
      * 获取数组的泛型
+     *
      * @return
      */
     public static String getFirstGenericsForArray(Project project, int treeLevel, StringBuilder interfaceContent, PsiField fieldItem) {
@@ -519,7 +519,7 @@ public class TypescriptUtils {
         } else if ("java.lang.String".equals(canonicalText)) {
             return "string";
         } else {
-  
+
             boolean isArrayType = CommonUtils.isArrayType(deepComponentType);
             boolean isMapType = CommonUtils.isMapType(deepComponentType);
             // 里头还是一层 集合
@@ -530,14 +530,14 @@ public class TypescriptUtils {
                     return "any[]";
                 } else {
                     // 判断泛型是不是number
-                    String firstTsTypeForArray = getFirstTsTypeForArray(project,treeLevel + 1, parameters[0].getDeepComponentType());
+                    String firstTsTypeForArray = getFirstTsTypeForArray(project, treeLevel + 1, parameters[0].getDeepComponentType());
                     return firstTsTypeForArray + "[]";
                 }
             } else if (isMapType) {
                 // TODO: 2023-12-06
                 return deepComponentType.getPresentableText();
             } else {
-                findClassToTsInterface(project ,treeLevel + 1, canonicalText);
+                findClassToTsInterface(project, treeLevel + 1, canonicalText);
                 return deepComponentType.getPresentableText();
             }
 
@@ -562,6 +562,10 @@ public class TypescriptUtils {
                 if (parent instanceof PsiJavaFile) {
                     PsiJavaFile classParentJavaFile = (PsiJavaFile) parent;
                     String findClassContent = generatorInterfaceContentForPsiJavaFile(project, classParentJavaFile, false, treeLevel + 1);
+                    canonicalText2TInnerClassInterfaceContent.put(canonicalText, findClassContent);
+                } else if (parent instanceof PsiClass) {
+                    PsiClassImpl psiClassParent = (PsiClassImpl) parent;
+                    String findClassContent = generatorInterfaceContentForPsiClass(project, psiClassParent, psiClass, false, treeLevel + 1);
                     canonicalText2TInnerClassInterfaceContent.put(canonicalText, findClassContent);
                 }
             }
