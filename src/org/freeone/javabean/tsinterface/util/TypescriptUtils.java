@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.compiled.ClsAnnotationImpl;
-import com.intellij.psi.impl.source.PsiClassImpl;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl;
 import com.intellij.psi.impl.source.tree.java.PsiNameValuePairImpl;
@@ -149,6 +148,9 @@ public class TypescriptUtils {
             String classNameAsTypeName = aClass.getName();
             typeContent.append("export ").append(defaultText).append("type ").append(classNameAsTypeName).append(" = ");
             PsiField[] allFields = aClass.getAllFields();
+            if (JavaBeanToTypescriptInterfaceSettingsState.getInstance().ignoreParentField) {
+                allFields = aClass.getFields();
+            }
             List<String> enumConstantValueList = new ArrayList<>();
             enumConstantValueList.add("string");
             for (PsiField psiField : allFields) {
@@ -229,6 +231,9 @@ public class TypescriptUtils {
         String classNameAsInterfaceName = aClass.getName();
         interfaceContent.append("export ").append(defaultText).append("interface ").append(classNameAsInterfaceName).append(" {\n");
         PsiField[] fields = aClass.getAllFields();
+        if (JavaBeanToTypescriptInterfaceSettingsState.getInstance().ignoreParentField) {
+            fields = aClass.getFields();
+        }
         PsiMethod[] allMethods = aClass.getAllMethods();
         for (int i = 0; i < fields.length; i++) {
             PsiField fieldItem = fields[i];
@@ -455,16 +460,12 @@ public class TypescriptUtils {
                 psiClass = JavaPsiFacade.getInstance(project).findClass(canonicalText, allScope);
             }
             if (psiClass != null) {
-                PsiClass psiClassImpl = psiClass;
-                JvmClassKind classKind = psiClassImpl.getClassKind();
+                JvmClassKind classKind = psiClass.getClassKind();
                 //  2022-08-09  ignroe ANNOTATION and  INTERFACE
                 if (classKind != JvmClassKind.ANNOTATION && classKind != JvmClassKind.INTERFACE) {
                     canonicalText2findClassTimeMap.put(canonicalText, 1);
                     JvmReferenceType superClassType = psiClass.getSuperClassType();
-                    if (superClassType == null) {
-
-                    }
-                    if ("Enum".equalsIgnoreCase(superClassType.getName())) {
+                    if (superClassType != null && "Enum".equalsIgnoreCase(superClassType.getName())) {
                         // Enum
                         PsiElement parent = psiClass.getParent();
                         if (parent instanceof PsiJavaFile) {
@@ -484,7 +485,7 @@ public class TypescriptUtils {
                             String findClassContent = generatorInterfaceContentForPsiJavaFile(project, classParentJavaFile, false, treeLevel + 1);
                             canonicalText2TInnerClassInterfaceContent.put(canonicalText, findClassContent);
                         } else if (parent instanceof PsiClass) {
-                            PsiClassImpl psiClassParent = (PsiClassImpl) parent;
+                            PsiClass psiClassParent = (PsiClass) parent;
                             String findClassContent = generatorInterfaceContentForPsiClass(project, psiClassParent, psiClass, false, treeLevel + 1);
                             canonicalText2TInnerClassInterfaceContent.put(canonicalText, findClassContent);
                         }
@@ -632,7 +633,7 @@ public class TypescriptUtils {
                     String findClassContent = generatorInterfaceContentForPsiJavaFile(project, classParentJavaFile, false, treeLevel + 1);
                     canonicalText2TInnerClassInterfaceContent.put(canonicalText, findClassContent);
                 } else if (parent instanceof PsiClass) {
-                    PsiClassImpl psiClassParent = (PsiClassImpl) parent;
+                    PsiClass psiClassParent = (PsiClass) parent;
                     String findClassContent = generatorInterfaceContentForPsiClass(project, psiClassParent, psiClass, false, treeLevel + 1);
                     canonicalText2TInnerClassInterfaceContent.put(canonicalText, findClassContent);
                 }
