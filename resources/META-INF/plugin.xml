@@ -41,7 +41,7 @@
   </description>
 
   <change-notes>
-    0.0.16 @JsonProperty in getter setter + find class in all scope 支持@JsonProperty在setter getter上, 支持在all scope中查找类 &lt;br/&gt;
+    0.0.16 @JsonProperty in getter setter + find class in all scope + ignore parent fields 支持@JsonProperty在setter getter上, 支持在all scope中查找类, 支持忽略父类的字段 &lt;br/&gt;
     0.0.15 fix a problem when using inner public static class  修复使用内部公共静态类时的一个问题 &lt;br/&gt;
     0.0.14 fix the file name when use inner public static class  修复使用内部公共静态类时的文件名 &lt;br/&gt;
     0.0.13 support inner public static class 支持内部公共静态类 &lt;br/&gt;

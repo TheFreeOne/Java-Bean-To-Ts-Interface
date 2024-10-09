@@ -7,6 +7,7 @@ public class JavaBeanToTypescriptInterfaceComponent {
     private JCheckBox dateToStringCheckBox;
     private JCheckBox useJsonPropertyCheckBox;
     private JCheckBox allowFindClassInAllScope;
+    private JCheckBox ignoreParentField;
 
     public JPanel getJPanel() {
         return jPanel;
@@ -23,4 +24,9 @@ public class JavaBeanToTypescriptInterfaceComponent {
     public JCheckBox getAllowFindClassInAllScope() {
         return allowFindClassInAllScope;
     }
+
+    public JCheckBox getIgnoreParentField() {
+        return ignoreParentField;
+    }
+
 }

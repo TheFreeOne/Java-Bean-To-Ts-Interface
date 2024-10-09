@@ -30,6 +30,8 @@ import org.jetbrains.annotations.Nullable;
 
     public boolean allowFindClassInAllScope = false;
 
+    public boolean ignoreParentField = false;
+
 
 
     public static JavaBeanToTypescriptInterfaceSettingsState getInstance() {
@@ -69,5 +71,13 @@ import org.jetbrains.annotations.Nullable;
 
     public void setAllowFindClassInAllScope(boolean allowFindClassInAllScope) {
         this.allowFindClassInAllScope = allowFindClassInAllScope;
+    }
+
+    public boolean isIgnoreParentField() {
+        return ignoreParentField;
+    }
+
+    public void setIgnoreParentField(boolean ignoreParentField) {
+        this.ignoreParentField = ignoreParentField;
     }
 }
