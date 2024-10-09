@@ -28,6 +28,8 @@ import org.jetbrains.annotations.Nullable;
 
     public boolean useAnnotationJsonProperty = false;
 
+    public boolean allowFindClassInAllScope = false;
+
 
 
     public static JavaBeanToTypescriptInterfaceSettingsState getInstance() {
@@ -61,4 +63,11 @@ import org.jetbrains.annotations.Nullable;
         this.enableDataToString = enableDataToString;
     }
 
+    public boolean isAllowFindClassInAllScope() {
+        return allowFindClassInAllScope;
+    }
+
+    public void setAllowFindClassInAllScope(boolean allowFindClassInAllScope) {
+        this.allowFindClassInAllScope = allowFindClassInAllScope;
+    }
 }

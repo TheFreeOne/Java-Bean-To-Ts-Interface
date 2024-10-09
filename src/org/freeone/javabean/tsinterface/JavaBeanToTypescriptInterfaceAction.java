@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.impl.source.PsiClassImpl;
 import org.freeone.javabean.tsinterface.swing.SampleDialogWrapper;
 import org.freeone.javabean.tsinterface.swing.TypescriptInterfaceShowerWrapper;
@@ -75,8 +76,8 @@ public class JavaBeanToTypescriptInterfaceAction extends AnAction {
 
             if (file instanceof PsiJavaFile ) {
                 PsiJavaFile psiJavaFile = (PsiJavaFile) file;
-                if (psiElement instanceof PsiClassImpl) {
-                    PsiClassImpl psiClass = (PsiClassImpl) psiElement;
+                if (psiElement instanceof PsiClass) {
+                    PsiClass psiClass = (PsiClass) psiElement;
                     boolean innerPublicClass = CommonUtils.isInnerPublicClass(psiJavaFile, psiClass);
                     if (innerPublicClass){
                         SampleDialogWrapper sampleDialogWrapper = new SampleDialogWrapper();

@@ -36,6 +36,7 @@ final class JavaBeanToTypescriptInterfaceSettingsConfigurable implements Configu
         JavaBeanToTypescriptInterfaceSettingsState settings = JavaBeanToTypescriptInterfaceSettingsState.getInstance();
         boolean modified = settings.enableDataToString != mySettingsComponent.getDateToStringCheckBox().isSelected();
         modified |= settings.useAnnotationJsonProperty != mySettingsComponent.getUseJsonPropertyCheckBox().isSelected();
+        modified |= settings.allowFindClassInAllScope != mySettingsComponent.getAllowFindClassInAllScope().isSelected();
         return modified;
 
     }
@@ -45,6 +46,7 @@ final class JavaBeanToTypescriptInterfaceSettingsConfigurable implements Configu
         JavaBeanToTypescriptInterfaceSettingsState settings = JavaBeanToTypescriptInterfaceSettingsState.getInstance();
         settings.setEnableDataToString(mySettingsComponent.getDateToStringCheckBox().isSelected());
         settings.setUseAnnotationJsonProperty(mySettingsComponent.getUseJsonPropertyCheckBox().isSelected());
+        settings.setAllowFindClassInAllScope(mySettingsComponent.getAllowFindClassInAllScope().isSelected());
     }
 
 
@@ -53,6 +55,7 @@ final class JavaBeanToTypescriptInterfaceSettingsConfigurable implements Configu
         JavaBeanToTypescriptInterfaceSettingsState settings = JavaBeanToTypescriptInterfaceSettingsState.getInstance();
         mySettingsComponent.getDateToStringCheckBox().setSelected(settings.enableDataToString);
         mySettingsComponent.getUseJsonPropertyCheckBox().setSelected(settings.useAnnotationJsonProperty);
+        mySettingsComponent.getAllowFindClassInAllScope().setSelected(settings.allowFindClassInAllScope);
     }
 
     @Override

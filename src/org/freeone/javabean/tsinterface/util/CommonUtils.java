@@ -305,7 +305,7 @@ public class CommonUtils {
         return singleFolderDescriptor;
     }
 
-    public static boolean isInnerPublicClass(PsiJavaFile psiJavaFile, PsiClassImpl psiClass) {
+    public static boolean isInnerPublicClass(PsiJavaFile psiJavaFile, PsiClass psiClass) {
         PsiClass[] classes = psiJavaFile.getClasses();
         String targetQualifiedName = psiClass.getQualifiedName();
         // 暂时仅支持只有公共类的方式，其他的骚操作后见再说

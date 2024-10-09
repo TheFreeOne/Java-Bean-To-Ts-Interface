@@ -6,6 +6,7 @@ import com.intellij.lang.jvm.types.JvmReferenceType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.compiled.ClsAnnotationImpl;
 import com.intellij.psi.impl.source.PsiClassImpl;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl;
@@ -228,6 +229,7 @@ public class TypescriptUtils {
         String classNameAsInterfaceName = aClass.getName();
         interfaceContent.append("export ").append(defaultText).append("interface ").append(classNameAsInterfaceName).append(" {\n");
         PsiField[] fields = aClass.getAllFields();
+        PsiMethod[] allMethods = aClass.getAllMethods();
         for (int i = 0; i < fields.length; i++) {
             PsiField fieldItem = fields[i];
             // 默认将分隔标记设置成 ？：
@@ -241,7 +243,7 @@ public class TypescriptUtils {
 
             //  2023-12-26 判断是或否使用JsonProperty
             if (JavaBeanToTypescriptInterfaceSettingsState.getInstance().useAnnotationJsonProperty) {
-                String jsonPropertyValue = getJsonPropertyValue(fieldItem);
+                String jsonPropertyValue = getJsonPropertyValue(fieldItem, allMethods);
                 if (jsonPropertyValue != null) {
                     fieldName = jsonPropertyValue;
                 }
@@ -287,10 +289,22 @@ public class TypescriptUtils {
         interfaceContent.append("}\n");
     }
 
-    private static String getJsonPropertyValue(PsiField fieldItem) {
+    /**
+     * 从字段名称中获取名称
+     * @param fieldItem
+     * @param allMethods
+     * @return
+     */
+    private static String getJsonPropertyValue(PsiField fieldItem, PsiMethod[] allMethods) {
         String result = null;
+        String name = fieldItem.getName();
+        String getterMethodName = "get"+name;
+        String setterMethodName = "set"+name;
         PsiAnnotation[] annotations = fieldItem.getAnnotations();
         for (PsiAnnotation annotation : annotations) {
+            if (result != null) {
+                break;
+            }
             if (annotation instanceof PsiAnnotationImpl) {
                 PsiAnnotationImpl psiAnnotationImpl = (PsiAnnotationImpl) annotation;
                 String qualifiedName = psiAnnotationImpl.getQualifiedName();
@@ -308,9 +322,50 @@ public class TypescriptUtils {
                         }
                     }
                 }
+            } else if (annotation instanceof ClsAnnotationImpl) {
+                ClsAnnotationImpl psiAnnotationImpl = (ClsAnnotationImpl) annotation;
+                result = MyClsGetAnnotationValueUtils.getValue(psiAnnotationImpl);
             }
-
         }
+        // 从方法中获取
+        if (result == null) {
+            for (PsiMethod method : allMethods) {
+                if (method.getName().equalsIgnoreCase(getterMethodName) || method.getName().equalsIgnoreCase(setterMethodName)) {
+                    PsiAnnotation[] methodAnnotations = method.getAnnotations();
+                    for (PsiAnnotation annotation : methodAnnotations) {
+                        if (result != null) {
+                            break;
+                        }
+                        // annotation start
+                        if (annotation instanceof PsiAnnotationImpl) {
+                            PsiAnnotationImpl psiAnnotationImpl = (PsiAnnotationImpl) annotation;
+                            String qualifiedName = psiAnnotationImpl.getQualifiedName();
+                            if (qualifiedName != null && qualifiedName.equals("com.fasterxml.jackson.annotation.JsonProperty")) {
+                                for (JvmAnnotationAttribute attribute : psiAnnotationImpl.getAttributes()) {
+                                    if ("value".equals(attribute.getAttributeName()) && attribute.getAttributeValue() != null) {
+                                        if (attribute instanceof PsiNameValuePairImpl) {
+                                            PsiNameValuePairImpl psiNameValuePair = (PsiNameValuePairImpl) attribute;
+                                            String literalValue = psiNameValuePair.getLiteralValue();
+                                            if (literalValue != null && literalValue.trim().length() > 0) {
+                                                result = literalValue;
+                                                break;
+                                            }
+                                        }
+
+                                    }
+                                }
+                            }
+                        }  else if (annotation instanceof ClsAnnotationImpl) {
+                            ClsAnnotationImpl psiAnnotationImpl = (ClsAnnotationImpl) annotation;
+                            result = MyClsGetAnnotationValueUtils.getValue(psiAnnotationImpl);
+                        }
+                        // annotation end
+                    }
+                }
+            }
+        }
+
+
         return result;
     }
 
@@ -361,6 +416,10 @@ public class TypescriptUtils {
                     } else {
                         GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
                         PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(vType.getCanonicalText(), projectScope);
+                        if (psiClass == null && JavaBeanToTypescriptInterfaceSettingsState.getInstance().allowFindClassInAllScope) {
+                            GlobalSearchScope allScope = GlobalSearchScope.allScope(project);
+                            psiClass = JavaPsiFacade.getInstance(project).findClass(vType.getCanonicalText(), allScope);
+                        }
                         if (psiClass == null) {
                             defaultVType = "any";
                         } else {
@@ -391,6 +450,10 @@ public class TypescriptUtils {
         Integer findClassTime = canonicalText2findClassTimeMap.getOrDefault(canonicalText, 0);
         if (findClassTime == 0) {
             PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(canonicalText, projectScope);
+            if (psiClass == null && JavaBeanToTypescriptInterfaceSettingsState.getInstance().allowFindClassInAllScope) {
+                GlobalSearchScope allScope = GlobalSearchScope.allScope(project);
+                psiClass = JavaPsiFacade.getInstance(project).findClass(canonicalText, allScope);
+            }
             if (psiClass != null) {
                 PsiClass psiClassImpl = psiClass;
                 JvmClassKind classKind = psiClassImpl.getClassKind();
@@ -552,10 +615,15 @@ public class TypescriptUtils {
      * @param canonicalText
      */
     private static void findClassToTsInterface(Project project, int treeLevel, String canonicalText) {
-        GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
+
         Integer findClassTimes = canonicalText2findClassTimeMap.getOrDefault(canonicalText, 0);
         if (findClassTimes == 0) {
+            GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
             PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(canonicalText, projectScope);
+            if (psiClass == null && JavaBeanToTypescriptInterfaceSettingsState.getInstance().allowFindClassInAllScope) {
+                GlobalSearchScope allScope = GlobalSearchScope.allScope(project);
+                psiClass = JavaPsiFacade.getInstance(project).findClass(canonicalText, allScope);
+            }
             if (psiClass != null) {
                 canonicalText2findClassTimeMap.put(canonicalText, 1);
                 PsiElement parent = psiClass.getParent();
