@@ -10,7 +10,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.PsiClassImpl;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl;
 
@@ -119,7 +118,7 @@ public class CommonUtils {
      * @return
      */
     public static boolean isArray(PsiField field) {
-        boolean contains = field.getType().getCanonicalText().contains("[]");
+        boolean contains = field.getType().getCanonicalText().endsWith("[]");
         if (contains) {
             return true;
         }
@@ -138,7 +137,11 @@ public class CommonUtils {
      * @return
      */
     public static boolean isArrayType(PsiType psiType) {
-        return psiType.getCanonicalText().contains("java.util.List") || Arrays.stream(psiType.getSuperTypes()).anyMatch(superType -> superType.getCanonicalText().contains("java.util.Collection<"));
+        boolean isArrayType = psiType.getCanonicalText().contains("java.util.List") || Arrays.stream(psiType.getSuperTypes()).anyMatch(superType -> superType.getCanonicalText().contains("java.util.Collection<"));
+        if (isArrayType) {
+            System.out.println("isArrayType = true and getArrayDimensions is " + psiType.getArrayDimensions());
+        }
+        return isArrayType;
     }
 
 

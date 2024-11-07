@@ -269,7 +269,6 @@ public class TypescriptUtils {
                 processMap(project, treeLevel, interfaceContent, fieldItem, fieldSplitTag);
 
             } else if (isJavaUtilDate && JavaBeanToTypescriptInterfaceSettingsState.getInstance().enableDataToString) {
-
                 interfaceContent.append(fieldSplitTag).append("string");
             } else {
                 if (isNumber) {
@@ -296,6 +295,7 @@ public class TypescriptUtils {
 
     /**
      * 从字段名称中获取名称
+     *
      * @param fieldItem
      * @param allMethods
      * @return
@@ -303,8 +303,8 @@ public class TypescriptUtils {
     private static String getJsonPropertyValue(PsiField fieldItem, PsiMethod[] allMethods) {
         String result = null;
         String name = fieldItem.getName();
-        String getterMethodName = "get"+name;
-        String setterMethodName = "set"+name;
+        String getterMethodName = "get" + name;
+        String setterMethodName = "set" + name;
         PsiAnnotation[] annotations = fieldItem.getAnnotations();
         for (PsiAnnotation annotation : annotations) {
             if (result != null) {
@@ -360,7 +360,7 @@ public class TypescriptUtils {
                                     }
                                 }
                             }
-                        }  else if (annotation instanceof ClsAnnotationImpl) {
+                        } else if (annotation instanceof ClsAnnotationImpl) {
                             ClsAnnotationImpl psiAnnotationImpl = (ClsAnnotationImpl) annotation;
                             result = MyClsGetAnnotationValueUtils.getValue(psiAnnotationImpl);
                         }
@@ -395,7 +395,7 @@ public class TypescriptUtils {
         if (type instanceof PsiClassReferenceType) {
             PsiClassReferenceType psiClassReferenceType = (PsiClassReferenceType) type;
             PsiType[] parameters = psiClassReferenceType.getParameters();
-            if (parameters != null && parameters.length == 2) {
+            if (parameters.length == 2) {
                 PsiType kType = parameters[0];
                 PsiType vType = parameters[1];
 
@@ -414,10 +414,22 @@ public class TypescriptUtils {
                 {
                     boolean isNumber = CommonUtils.isNumberType(vType);
                     boolean isStringType = CommonUtils.isStringType(vType);
+                    boolean isArrayType = vType.getArrayDimensions() > 0 || CommonUtils.isArrayType(vType);
                     if (isNumber) {
                         defaultVType = "number";
                     } else if (isStringType) {
                         defaultVType = "string";
+                    } else if (isArrayType) {
+
+                        PsiType getDeepComponentType = null;
+                        if (vType instanceof PsiArrayType) {
+                            getDeepComponentType = vType.getDeepComponentType();
+                        } else if (vType instanceof PsiClassReferenceType) {
+                            getDeepComponentType = type.getDeepComponentType();
+                        }
+                        if (getDeepComponentType != null) {
+                            defaultVType = getFirstTsTypeForArray(project, 0, getDeepComponentType) + "[]";
+                        }
                     } else {
                         GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
                         PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(vType.getCanonicalText(), projectScope);
@@ -445,13 +457,10 @@ public class TypescriptUtils {
     }
 
     private static void processOtherTypes(Project project, int treeLevel, StringBuilder interfaceContent, PsiField fieldItem, String fieldSplitTag) {
-        // 不需要设置:any
-//                        boolean needSetAny = true;
+
         String canonicalText = CommonUtils.getJavaBeanTypeForNormalField(fieldItem);
         System.out.println("canonicalText = " + canonicalText);
         GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
-//                        GlobalSearchScope globalSearchScope = GlobalSearchScope.allScope(project);
-
         Integer findClassTime = canonicalText2findClassTimeMap.getOrDefault(canonicalText, 0);
         if (findClassTime == 0) {
             PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(canonicalText, projectScope);
@@ -598,7 +607,6 @@ public class TypescriptUtils {
                     return firstTsTypeForArray + "[]";
                 }
             } else if (isMapType) {
-                // TODO: 2023-12-06
                 return deepComponentType.getPresentableText();
             } else {
                 findClassToTsInterface(project, treeLevel + 1, canonicalText);
@@ -640,5 +648,34 @@ public class TypescriptUtils {
             }
         }
         canonicalText2TreeLevel.put(canonicalText, treeLevel);
+    }
+
+    /**
+     * 没写好
+     *
+     * @param type
+     * @return
+     */
+    @Deprecated
+    public static String getTypeString(PsiType type) {
+        String typeString = "any";
+        String canonicalText = type.getCanonicalText();
+
+        if (type.getArrayDimensions() != 0 || CommonUtils.isArrayType(type)) {
+
+        } else if (CommonUtils.isMapType(type)) {
+
+        } else if (CommonUtils.isNumberType(type)) {
+            typeString = "number";
+        } else if (CommonUtils.isStringType(type)) {
+            typeString = "string";
+        } else if ("java.lang.Boolean".equals(canonicalText) || "boolean".equals(canonicalText)) {
+            typeString = "boolean";
+        } else {
+
+        }
+
+
+        return typeString;
     }
 }
