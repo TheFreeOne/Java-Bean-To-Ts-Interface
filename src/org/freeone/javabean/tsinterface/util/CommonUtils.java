@@ -119,7 +119,7 @@ public class CommonUtils {
      * @return
      */
     public static boolean isArray(PsiField field) {
-        boolean contains = field.getText().contains("[]");
+        boolean contains = field.getType().getCanonicalText().contains("[]");
         if (contains) {
             return true;
         }
