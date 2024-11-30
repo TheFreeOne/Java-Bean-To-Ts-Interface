@@ -41,7 +41,7 @@
   </description>
 
   <change-notes>
-    0.0.18 chore &lt;br/&gt;
+    0.0.18 自定义泛型 &lt;br/&gt;
     0.0.17 fix: "[]" in doc comment be recognized as an array ;修复在注释中写[]会被错误识别成数组的问题 &lt;br/&gt;
     0.0.16 @JsonProperty in getter setter + find class in all scope + ignore parent fields 支持@JsonProperty在setter getter上, 支持在all scope中查找类, 支持忽略父类的字段 &lt;br/&gt;
     0.0.15 fix a problem when using inner public static class  修复使用内部公共静态类时的一个问题 &lt;br/&gt;

@@ -94,6 +94,11 @@ public class CommonUtils {
         }
     }
 
+    /**
+     * 获取商品的类型
+     * @param field
+     * @return
+     */
     public static String getJavaBeanTypeForNormalField(PsiField field) {
         PsiType type = field.getType();
         if (type instanceof PsiArrayType) {
@@ -102,10 +107,18 @@ public class CommonUtils {
             PsiType deepComponentType = psiArrayType.getDeepComponentType();
             return deepComponentType.getCanonicalText();
         } else if (type instanceof PsiClassReferenceType) {
-            // 集合
+            // 集合或者自定义的泛型
             PsiClassReferenceType psiClassReferenceType = (PsiClassReferenceType) type;
             PsiType deepComponentType = psiClassReferenceType.getDeepComponentType();
-            return deepComponentType.getCanonicalText();
+            String canonicalText = deepComponentType.getCanonicalText();
+            if(canonicalText.contains("<")) {
+                PsiElement psiContext = psiClassReferenceType.getPsiContext();
+                if (psiContext != null && psiContext.getChildren().length >0) {
+                    PsiElement firstChild = psiContext.getFirstChild();
+                    return canonicalText;
+                }
+            }
+            return canonicalText;
         } else {
             return "any";
         }

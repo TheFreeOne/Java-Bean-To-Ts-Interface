@@ -108,7 +108,7 @@ public class JavaBeanToTypescriptInterfaceAction extends AnAction {
      * @param e
      * @param project
      * @param saveToFile
-     * @param psiJavaFile
+     * @param fileNameToSave
      * @param interfaceContent
      */
     private void generateTypescriptContent(AnActionEvent e, Project project, boolean saveToFile, String fileNameToSave, String interfaceContent) {

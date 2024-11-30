@@ -52,16 +52,16 @@ public class TypescriptUtils {
         canonicalText2findClassTimeMap.clear();
     }
 
-    public static String generatorInterfaceContentForPsiClassElement(Project project, PsiClass psiClass, boolean saveToAFile) {
+    public static String generatorInterfaceContentForPsiClassElement(Project project, PsiClass psiClass, boolean isDefault) {
         StringBuilder interfaceContent;
         // 保存到文件中就是需要default, 不然就不是
         try {
             interfaceContent = new StringBuilder();
             String defaultText = "";
-            if (saveToAFile) {
+            if (isDefault) {
                 defaultText = "default ";
             }
-            doClassInterfaceContentForTypeScript(project, 1, interfaceContent, defaultText, psiClass, "JAVA_FILE");
+            doClassInterfaceContentForTypeScript(project, 1, interfaceContent, defaultText, psiClass);
             //将Map转换成List
             List<Map.Entry<String, Integer>> list = new ArrayList<>(canonicalText2TreeLevel.entrySet());
             // 借助List的sort方法，需要重写排序规则
@@ -185,7 +185,7 @@ public class TypescriptUtils {
         PsiClass[] classes = psiJavaFile.getClasses();
         // 类文件只有只有一个类，查找一次就可以了
         for (PsiClass aClass : classes) {
-            doClassInterfaceContentForTypeScript(project, treeLevel, interfaceContent, defaultText, aClass, "JAVA_FILE");
+            doClassInterfaceContentForTypeScript(project, treeLevel, interfaceContent, defaultText, aClass);
         }
         return interfaceContent.toString();
     }
@@ -210,11 +210,8 @@ public class TypescriptUtils {
         // 内部内部类可能重新查询多次
         PsiClass innerClassByName = psiClassInParameters.findInnerClassByName(targetPsiClass.getName(), true);
         if (innerClassByName != null) {
-            doClassInterfaceContentForTypeScript(project, treeLevel, interfaceContent, defaultText, innerClassByName, "CLASS");
+            doClassInterfaceContentForTypeScript(project, treeLevel, interfaceContent, defaultText, innerClassByName);
         }
-//        for (PsiClass aClass : classes) {
-//            doClassInterfaceContentForTypeScript(project, treeLevel, interfaceContent, defaultText, aClass,"CLASS");
-//        }
         return interfaceContent.toString();
     }
 
@@ -227,7 +224,7 @@ public class TypescriptUtils {
      * @param defaultText
      * @param aClass
      */
-    private static void doClassInterfaceContentForTypeScript(Project project, int treeLevel, StringBuilder interfaceContent, String defaultText, PsiClass aClass, String enterTYpe) {
+    private static void doClassInterfaceContentForTypeScript(Project project, int treeLevel, StringBuilder interfaceContent, String defaultText, PsiClass aClass) {
         String classNameAsInterfaceName = aClass.getName();
         interfaceContent.append("export ").append(defaultText).append("interface ").append(classNameAsInterfaceName).append(" {\n");
         PsiField[] fields = aClass.getAllFields();
@@ -467,6 +464,15 @@ public class TypescriptUtils {
             if (psiClass == null && JavaBeanToTypescriptInterfaceSettingsState.getInstance().allowFindClassInAllScope) {
                 GlobalSearchScope allScope = GlobalSearchScope.allScope(project);
                 psiClass = JavaPsiFacade.getInstance(project).findClass(canonicalText, allScope);
+            }
+            if (psiClass == null) {
+                // 2024-11-30 特殊处理，自定义泛型
+                PsiType type = fieldItem.getType();
+                if (type instanceof PsiClassReferenceType ) {
+                    PsiClassReferenceType psiClassReferenceType = (PsiClassReferenceType) type;
+                    psiClass = psiClassReferenceType.resolve();
+                    canonicalText = psiClass.getQualifiedName();
+                }
             }
             if (psiClass != null) {
                 JvmClassKind classKind = psiClass.getClassKind();
