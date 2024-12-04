@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
     public boolean useAnnotationJsonProperty = false;
 
-    public boolean allowFindClassInAllScope = false;
+    public boolean allowFindClassInAllScope = true;
 
     public boolean ignoreParentField = false;
 
