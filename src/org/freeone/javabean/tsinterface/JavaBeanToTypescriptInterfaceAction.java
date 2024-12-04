@@ -7,6 +7,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
@@ -30,6 +31,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 
 /**
  * 原来的保存到文件
@@ -45,10 +47,12 @@ public class JavaBeanToTypescriptInterfaceAction extends AnAction {
     public void actionPerformed(AnActionEvent e) {
         Project project = e.getProject();
         boolean needSaveToFile = true;
-        String menuText = e.getPresentation().getText();
+        Presentation presentation = e.getPresentation();
+        String description = Optional.ofNullable(presentation.getDescription()).orElse("");
+        String menuText = Optional.ofNullable(presentation.getText()).orElse("");
         try {
 
-            if (menuText != null && !menuText.toLowerCase().startsWith("save")) {
+            if (!menuText.toLowerCase().startsWith("save")) {
                 needSaveToFile = false;
             }
         } catch (Exception exception) {
@@ -63,8 +67,8 @@ public class JavaBeanToTypescriptInterfaceAction extends AnAction {
                 return;
             }
             String fileTypeName = target.getFileType().getName();
-            if (!"JAVA".equalsIgnoreCase(fileTypeName)) {
-                Messages.showInfoMessage("The file is not a java file!", "");
+            if (!"JAVA".equalsIgnoreCase(fileTypeName) && !"CLASS".equalsIgnoreCase(fileTypeName)) {
+                Messages.showInfoMessage("The file is not a java file or class file!", "");
             }
             if (project == null) {
                 return;
@@ -74,7 +78,7 @@ public class JavaBeanToTypescriptInterfaceAction extends AnAction {
 
             PsiElement psiElement = e.getData(PlatformDataKeys.PSI_ELEMENT);
 
-            if (menuText != null && menuText.contains("2")) {
+            if (menuText.contains("2") || description.contains("2.0")) {
                 if (psiElement instanceof PsiClass) {
                     PsiClass psiClass = (PsiClass) psiElement;
                     TypescriptContentGenerator.processPsiClass(project, psiClass,needSaveToFile);

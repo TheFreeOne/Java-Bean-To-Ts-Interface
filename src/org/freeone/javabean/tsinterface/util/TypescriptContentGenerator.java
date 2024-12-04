@@ -1,5 +1,6 @@
 package org.freeone.javabean.tsinterface.util;
 
+import com.intellij.lang.jvm.JvmClassKind;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
@@ -23,12 +24,23 @@ public class TypescriptContentGenerator {
      */
     public static final String NOT_REQUIRE_SPLIT_TAG = "?: ";
 
-
+    /**
+     * SUCCESS_CANONICAL_TEXT和一样，只是执行到某方法就加入
+     */
+    public static final List<String> CREATE_TYPESCRIPT_CONTENT_FOR_SINGLE_PSI_CLASS_ENTRY = new ArrayList<>();
+    /**
+     * 这个是成功才加入
+     */
     private static final List<String> SUCCESS_CANONICAL_TEXT = new ArrayList<>();
+    /**
+     * 类的注释
+     */
+    private static final Map<String, String> CLASS_NAME_WITH_PACKAGE_2_TYPESCRIPT_COMMENT = new HashMap<>(8);
+
     /**
      * 属性类对应的interface的内容
      */
-    private static final Map<String, String> classNameWithPackage_2_T_CONTENT = new HashMap<>(8);
+    private static final Map<String, String> CLASS_NAME_WITH_PACKAGE_2_CONTENT = new HashMap<>(8);
 
 
     public static void processPsiClass(Project project, PsiClass selectedClass, boolean needDefault) {
@@ -49,10 +61,18 @@ public class TypescriptContentGenerator {
         String qualifiedName = selectedClass.getQualifiedName();
         for (String classNameWithPackage : SUCCESS_CANONICAL_TEXT) {
             StringBuilder stringBuilder = new StringBuilder();
-            String content = classNameWithPackage_2_T_CONTENT.get(classNameWithPackage);
+            String content = CLASS_NAME_WITH_PACKAGE_2_CONTENT.get(classNameWithPackage);
             if (content != null) {
                 // 以后做成一个配置项
 //                 stringBuilder.append(" /**\n" + "  * @packageName ").append(classNameWithPackage).append(" \n").append("  */\n");
+                String psiClassCComment = CLASS_NAME_WITH_PACKAGE_2_TYPESCRIPT_COMMENT.get(classNameWithPackage);
+                if (psiClassCComment != null && psiClassCComment.trim().length() > 0) {
+                    if (psiClassCComment.endsWith("\n")) {
+                        stringBuilder.append(psiClassCComment);
+                    } else {
+                        stringBuilder.append(psiClassCComment).append("\n");
+                    }
+                }
                 stringBuilder.append("export ");
                 if (needDefault && classNameWithPackage.equalsIgnoreCase(qualifiedName)) {
                     stringBuilder.append("default ");
@@ -67,8 +87,10 @@ public class TypescriptContentGenerator {
 
     public static void clearCache() {
         SUCCESS_CANONICAL_TEXT.clear();
-        classNameWithPackage_2_T_CONTENT.clear();
+        CLASS_NAME_WITH_PACKAGE_2_CONTENT.clear();
+        CREATE_TYPESCRIPT_CONTENT_FOR_SINGLE_PSI_CLASS_ENTRY.clear();
     }
+
 
     /**
      * 为单独的class创建内容
@@ -85,51 +107,83 @@ public class TypescriptContentGenerator {
             if (SUCCESS_CANONICAL_TEXT.contains(qualifiedName)) {
                 return psiClassName;
             }
+            // 避免递归调用死循环
+            if (CREATE_TYPESCRIPT_CONTENT_FOR_SINGLE_PSI_CLASS_ENTRY.contains(qualifiedName)) {
+                return psiClassName;
+            }
+            CREATE_TYPESCRIPT_CONTENT_FOR_SINGLE_PSI_CLASS_ENTRY.add(qualifiedName);
+
             System.out.println(psiClassName + " qualifiedName " + qualifiedName);
+
+            JvmClassKind classKind = psiClass.getClassKind();
+
 
             PsiField[] fields = psiClass.getAllFields();
             if (JavaBeanToTypescriptInterfaceSettingsState.getInstance().ignoreParentField) {
                 fields = psiClass.getFields();
             }
             PsiMethod[] allMethods = psiClass.getAllMethods();
-            contentBuilder.append("interface ").append(psiClassName).append(" {\n");
-            for (int i = 0; i < fields.length; i++) {
-                PsiField fieldItem = fields[i];
-                String documentText = "";
-                // 获取注释
-                PsiDocComment docComment = fieldItem.getDocComment();
-                if (docComment != null && docComment.getText() != null) {
-                    documentText = docComment.getText();
-                }
-                String fieldName = fieldItem.getName();
-                //  2023-12-26 判断是或否使用JsonProperty
-                if (JavaBeanToTypescriptInterfaceSettingsState.getInstance().useAnnotationJsonProperty) {
-                    String jsonPropertyValue = CommonUtils.getJsonPropertyValue(fieldItem, allMethods);
-                    if (jsonPropertyValue != null) {
-                        fieldName = jsonPropertyValue;
+            if (classKind.equals(JvmClassKind.CLASS)) {
+                contentBuilder.append("interface ").append(psiClassName).append(" {\n");
+                for (int i = 0; i < fields.length; i++) {
+                    PsiField fieldItem = fields[i];
+                    String documentText = "";
+                    // 获取注释
+                    PsiDocComment docComment = fieldItem.getDocComment();
+                    if (docComment != null && docComment.getText() != null) {
+                        documentText = docComment.getText();
+                    }
+                    String fieldName = fieldItem.getName();
+                    //  2023-12-26 判断是或否使用JsonProperty
+                    if (JavaBeanToTypescriptInterfaceSettingsState.getInstance().useAnnotationJsonProperty) {
+                        String jsonPropertyValue = CommonUtils.getJsonPropertyValue(fieldItem, allMethods);
+                        if (jsonPropertyValue != null) {
+                            fieldName = jsonPropertyValue;
+                        }
+                    }
+
+                    // 默认将分隔标记设置成 ？：
+                    String fieldSplitTag = NOT_REQUIRE_SPLIT_TAG;
+                    if (CommonUtils.isFieldRequire(fieldItem.getAnnotations())) {
+                        fieldSplitTag = REQUIRE_SPLIT_TAG;
+                    }
+
+                    String typeString;
+                    PsiType fieldType = fieldItem.getType();
+                    typeString = getTypeString(project, fieldType);
+                    if (documentText.trim().length() > 0) {
+                        contentBuilder.append("  ").append(documentText).append("\n");
+                    }
+                    contentBuilder.append("  ").append(fieldName).append(fieldSplitTag).append(typeString).append("\n");
+                    if (i != fields.length - 1) {
+                        contentBuilder.append("\n");
                     }
                 }
-
-
-                // 默认将分隔标记设置成 ？：
-                String fieldSplitTag = NOT_REQUIRE_SPLIT_TAG;
-                if (CommonUtils.isFieldRequire(fieldItem.getAnnotations())) {
-                    fieldSplitTag = REQUIRE_SPLIT_TAG;
+                contentBuilder.append("}\n");
+            } else if (classKind.equals(JvmClassKind.ENUM)) {
+                contentBuilder.append("type ").append(psiClassName).append(" = ");
+                List<String> enumConstantValueList = new ArrayList<>();
+//                enumConstantValueList.add("string");
+                for (PsiField psiField : fields) {
+                    if (psiField instanceof PsiEnumConstant) {
+                        String name = psiField.getName();
+                        // 将字段的名字视为字符串
+                        String value = "'" + name + "'";
+                        enumConstantValueList.add(value);
+                    }
                 }
+                String join = String.join(" | ", enumConstantValueList);
+                contentBuilder.append(join).append("\n");
 
-                String typeString = "any";
-                PsiType fieldType = fieldItem.getType();
-                typeString = getTypeString(project, fieldType);
-                if (documentText.trim().length() > 0) {
-                    contentBuilder.append("  ").append(documentText).append("\n");
-                }
-                contentBuilder.append("  ").append(fieldName).append(fieldSplitTag).append(typeString).append("\n");
-                contentBuilder.append("\n");
             }
-            contentBuilder.append("}\n");
             String content = contentBuilder.toString();
             SUCCESS_CANONICAL_TEXT.add(qualifiedName);
-            classNameWithPackage_2_T_CONTENT.put(qualifiedName, content);
+            PsiDocComment classDocComment = psiClass.getDocComment();
+            if (classDocComment != null && classDocComment.getText() != null) {
+                CLASS_NAME_WITH_PACKAGE_2_TYPESCRIPT_COMMENT.put(qualifiedName, classDocComment.getText());
+            }
+            CLASS_NAME_WITH_PACKAGE_2_CONTENT.put(qualifiedName, content);
+
             return psiClassName;
         } else {
             return "any";
