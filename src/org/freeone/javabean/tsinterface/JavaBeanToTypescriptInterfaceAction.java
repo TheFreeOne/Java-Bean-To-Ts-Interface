@@ -18,6 +18,7 @@ import com.intellij.psi.impl.source.PsiClassImpl;
 import org.freeone.javabean.tsinterface.swing.SampleDialogWrapper;
 import org.freeone.javabean.tsinterface.swing.TypescriptInterfaceShowerWrapper;
 import org.freeone.javabean.tsinterface.util.CommonUtils;
+import org.freeone.javabean.tsinterface.util.TypescriptContentGenerator;
 import org.freeone.javabean.tsinterface.util.TypescriptUtils;
 
 import java.awt.*;
@@ -43,12 +44,12 @@ public class JavaBeanToTypescriptInterfaceAction extends AnAction {
     @Override
     public void actionPerformed(AnActionEvent e) {
         Project project = e.getProject();
-        boolean isSaveToFile = true;
-
+        boolean needSaveToFile = true;
+        String menuText = e.getPresentation().getText();
         try {
-            String text = e.getPresentation().getText();
-            if (text != null && !text.toLowerCase().startsWith("save")) {
-                isSaveToFile = false;
+
+            if (menuText != null && !menuText.toLowerCase().startsWith("save")) {
+                needSaveToFile = false;
             }
         } catch (Exception exception) {
             exception.printStackTrace();
@@ -68,35 +69,46 @@ public class JavaBeanToTypescriptInterfaceAction extends AnAction {
             if (project == null) {
                 return;
             }
-            final String path = target.getPath();
             PsiManager psiMgr = PsiManager.getInstance(project);
             PsiFile file = psiMgr.findFile(target);
 
             PsiElement psiElement = e.getData(PlatformDataKeys.PSI_ELEMENT);
 
-            if (file instanceof PsiJavaFile ) {
-                PsiJavaFile psiJavaFile = (PsiJavaFile) file;
+            if (menuText != null && menuText.contains("2")) {
                 if (psiElement instanceof PsiClass) {
                     PsiClass psiClass = (PsiClass) psiElement;
-                    boolean innerPublicClass = CommonUtils.isInnerPublicClass(psiJavaFile, psiClass);
-                    if (innerPublicClass){
-                        SampleDialogWrapper sampleDialogWrapper = new SampleDialogWrapper();
-                        boolean b = sampleDialogWrapper.showAndGet();
-                        if (b) {
-                            // 只有内部public static class 会执行这一步
-                            String interfaceContent = TypescriptUtils.generatorInterfaceContentForPsiClassElement(project, psiClass, isSaveToFile);
-                            generateTypescriptContent(e, project, isSaveToFile, psiClass.getName(), interfaceContent);
-                            return ;
+                    TypescriptContentGenerator.processPsiClass(project, psiClass,needSaveToFile);
+                    String content = TypescriptContentGenerator.mergeContent(psiClass, needSaveToFile);
+                    TypescriptContentGenerator.clearCache();
+                    generateTypescriptContent(e, project, needSaveToFile, psiClass.getName(), content);
+                }
+            } else {
+
+                if (file instanceof PsiJavaFile ) {
+                    PsiJavaFile psiJavaFile = (PsiJavaFile) file;
+                    if (psiElement instanceof PsiClass) {
+                        PsiClass psiClass = (PsiClass) psiElement;
+                        boolean innerPublicClass = CommonUtils.isInnerPublicClass(psiJavaFile, psiClass);
+                        if (innerPublicClass){
+                            SampleDialogWrapper sampleDialogWrapper = new SampleDialogWrapper();
+                            boolean b = sampleDialogWrapper.showAndGet();
+                            if (b) {
+                                // 只有内部public static class 会执行这一步psiClass
+                                String interfaceContent = TypescriptUtils.generatorInterfaceContentForPsiClassElement(project, psiClass, needSaveToFile);
+                                generateTypescriptContent(e, project, needSaveToFile, psiClass.getName(), interfaceContent);
+                                return ;
+                            }
                         }
                     }
+
+                    // 正常情况下
+                    // 声明文件的主要内容 || content of *.d.ts
+                    String interfaceContent = TypescriptUtils.generatorInterfaceContentForPsiJavaFile(project, psiJavaFile, needSaveToFile);
+                    generateTypescriptContent(e, project, needSaveToFile, psiJavaFile.getVirtualFile().getNameWithoutExtension(), interfaceContent);
+
                 }
-
-                // 正常情况下
-                // 声明文件的主要内容 || content of *.d.ts
-                String interfaceContent = TypescriptUtils.generatorInterfaceContentForPsiJavaFile(project, psiJavaFile, isSaveToFile);
-                generateTypescriptContent(e, project, isSaveToFile, psiJavaFile.getVirtualFile().getNameWithoutExtension(), interfaceContent);
-
             }
+
 
         } else {
             Messages.showInfoMessage("Please choose a Java Bean", "");

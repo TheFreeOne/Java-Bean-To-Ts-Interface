@@ -1,15 +1,11 @@
 package org.freeone.javabean.tsinterface.util;
 
 import com.intellij.lang.jvm.JvmClassKind;
-import com.intellij.lang.jvm.annotation.JvmAnnotationAttribute;
 import com.intellij.lang.jvm.types.JvmReferenceType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.compiled.ClsAnnotationImpl;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
-import com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl;
-import com.intellij.psi.impl.source.tree.java.PsiNameValuePairImpl;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.freeone.javabean.tsinterface.setting.JavaBeanToTypescriptInterfaceSettingsState;
@@ -18,6 +14,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * @deprecated 1.0 使用
+ */
+@Deprecated
 public class TypescriptUtils {
 
     /**
@@ -61,6 +61,7 @@ public class TypescriptUtils {
             if (isDefault) {
                 defaultText = "default ";
             }
+
             doClassInterfaceContentForTypeScript(project, 1, interfaceContent, defaultText, psiClass);
             //将Map转换成List
             List<Map.Entry<String, Integer>> list = new ArrayList<>(canonicalText2TreeLevel.entrySet());
@@ -245,17 +246,17 @@ public class TypescriptUtils {
 
             //  2023-12-26 判断是或否使用JsonProperty
             if (JavaBeanToTypescriptInterfaceSettingsState.getInstance().useAnnotationJsonProperty) {
-                String jsonPropertyValue = getJsonPropertyValue(fieldItem, allMethods);
+                String jsonPropertyValue =CommonUtils.getJsonPropertyValue(fieldItem, allMethods);
                 if (jsonPropertyValue != null) {
                     fieldName = jsonPropertyValue;
                 }
             }
             interfaceContent.append("  ").append(fieldName);
-            boolean isArray = CommonUtils.isArray(fieldItem);
-            boolean isNumber = CommonUtils.isNumber(fieldItem);
-            boolean isString = CommonUtils.isString(fieldItem);
-            boolean isBoolean = CommonUtils.isBoolean(fieldItem);
-            boolean isJavaUtilDate = CommonUtils.isJavaUtilDate(fieldItem);
+            boolean isArray = CommonUtils.isArrayType(fieldItem.getType());
+            boolean isNumber = CommonUtils.isNumberType(fieldItem.getType());
+            boolean isString = CommonUtils.isStringType(fieldItem.getType());
+            boolean isBoolean = CommonUtils.isBooleanType(fieldItem.getType());
+            boolean isJavaUtilDate = CommonUtils.isJavaUtilDateType(fieldItem.getType());
             boolean isMap = CommonUtils.isMap(fieldItem);
             if (isArray) {
                 // 获取泛型
@@ -290,86 +291,8 @@ public class TypescriptUtils {
         interfaceContent.append("}\n");
     }
 
-    /**
-     * 从字段名称中获取名称
-     *
-     * @param fieldItem
-     * @param allMethods
-     * @return
-     */
-    private static String getJsonPropertyValue(PsiField fieldItem, PsiMethod[] allMethods) {
-        String result = null;
-        String name = fieldItem.getName();
-        String getterMethodName = "get" + name;
-        String setterMethodName = "set" + name;
-        PsiAnnotation[] annotations = fieldItem.getAnnotations();
-        for (PsiAnnotation annotation : annotations) {
-            if (result != null) {
-                break;
-            }
-            if (annotation instanceof PsiAnnotationImpl) {
-                PsiAnnotationImpl psiAnnotationImpl = (PsiAnnotationImpl) annotation;
-                String qualifiedName = psiAnnotationImpl.getQualifiedName();
-                if (qualifiedName != null && qualifiedName.equals("com.fasterxml.jackson.annotation.JsonProperty")) {
-                    for (JvmAnnotationAttribute attribute : psiAnnotationImpl.getAttributes()) {
-                        if ("value".equals(attribute.getAttributeName()) && attribute.getAttributeValue() != null) {
-                            if (attribute instanceof PsiNameValuePairImpl) {
-                                PsiNameValuePairImpl psiNameValuePair = (PsiNameValuePairImpl) attribute;
-                                String literalValue = psiNameValuePair.getLiteralValue();
-                                if (literalValue != null && literalValue.trim().length() > 0) {
-                                    result = literalValue;
-                                }
-                            }
-
-                        }
-                    }
-                }
-            } else if (annotation instanceof ClsAnnotationImpl) {
-                ClsAnnotationImpl psiAnnotationImpl = (ClsAnnotationImpl) annotation;
-                result = MyClsGetAnnotationValueUtils.getValue(psiAnnotationImpl);
-            }
-        }
-        // 从方法中获取
-        if (result == null) {
-            for (PsiMethod method : allMethods) {
-                if (method.getName().equalsIgnoreCase(getterMethodName) || method.getName().equalsIgnoreCase(setterMethodName)) {
-                    PsiAnnotation[] methodAnnotations = method.getAnnotations();
-                    for (PsiAnnotation annotation : methodAnnotations) {
-                        if (result != null) {
-                            break;
-                        }
-                        // annotation start
-                        if (annotation instanceof PsiAnnotationImpl) {
-                            PsiAnnotationImpl psiAnnotationImpl = (PsiAnnotationImpl) annotation;
-                            String qualifiedName = psiAnnotationImpl.getQualifiedName();
-                            if (qualifiedName != null && qualifiedName.equals("com.fasterxml.jackson.annotation.JsonProperty")) {
-                                for (JvmAnnotationAttribute attribute : psiAnnotationImpl.getAttributes()) {
-                                    if ("value".equals(attribute.getAttributeName()) && attribute.getAttributeValue() != null) {
-                                        if (attribute instanceof PsiNameValuePairImpl) {
-                                            PsiNameValuePairImpl psiNameValuePair = (PsiNameValuePairImpl) attribute;
-                                            String literalValue = psiNameValuePair.getLiteralValue();
-                                            if (literalValue != null && literalValue.trim().length() > 0) {
-                                                result = literalValue;
-                                                break;
-                                            }
-                                        }
-
-                                    }
-                                }
-                            }
-                        } else if (annotation instanceof ClsAnnotationImpl) {
-                            ClsAnnotationImpl psiAnnotationImpl = (ClsAnnotationImpl) annotation;
-                            result = MyClsGetAnnotationValueUtils.getValue(psiAnnotationImpl);
-                        }
-                        // annotation end
-                    }
-                }
-            }
-        }
 
 
-        return result;
-    }
 
     private static void processDocComment(StringBuilder interfaceContent, PsiField fieldItem) {
         PsiDocComment docComment = fieldItem.getDocComment();
@@ -396,17 +319,6 @@ public class TypescriptUtils {
                 PsiType kType = parameters[0];
                 PsiType vType = parameters[1];
 
-                {
-                    boolean isNumber = CommonUtils.isNumberType(kType);
-                    boolean isStringType = CommonUtils.isStringType(kType);
-                    if (isNumber) {
-                        defaultKTYpe = "number";
-                    } else if (isStringType) {
-                        defaultKTYpe = "string";
-                    } else {
-                        defaultKTYpe = "any";
-                    }
-                }
 
                 {
                     boolean isNumber = CommonUtils.isNumberType(vType);
@@ -549,7 +461,7 @@ public class TypescriptUtils {
      */
     public static String getFirstGenericsForArray(Project project, int treeLevel, StringBuilder interfaceContent, PsiField fieldItem) {
         PsiField field = fieldItem;
-        if (CommonUtils.isArray(field)) {
+        if (CommonUtils.isArrayType(field.getType())) {
             PsiType type = field.getType();
             // 数组 【】
             if (type instanceof PsiArrayType) {

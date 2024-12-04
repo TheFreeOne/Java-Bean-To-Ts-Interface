@@ -2,7 +2,7 @@
 <idea-plugin>
   <id>org.freeone.javabean.tsinterface</id>
   <name>Java Bean 2 TS Interface</name>
-  <version>0.0.18</version>
+  <version>0.1.0</version>
   <vendor email="free077@qq.com" url="https://github.com/TheFreeOne/Java-Bean-To-Ts-Interface">TheFreeOne</vendor>
 
   <description>
@@ -41,6 +41,7 @@
   </description>
 
   <change-notes>
+    0.1.0 重写逻辑 &lt;br/&gt;
     0.0.18 自定义泛型 &lt;br/&gt;
     0.0.17 fix: "[]" in doc comment be recognized as an array ;修复在注释中写[]会被错误识别成数组的问题 &lt;br/&gt;
     0.0.16 @JsonProperty in getter setter + find class in all scope + ignore parent fields 支持@JsonProperty在setter getter上, 支持在all scope中查找类, 支持忽略父类的字段 &lt;br/&gt;
@@ -88,7 +89,7 @@
     <group id="javaBeanToTypescriptInterfaceRightClickMenu" text="(→ . →) Java Bean to Typescript Interface" description="Java bean to typescript interface actions group" popup="true" >
       <add-to-group group-id="ProjectViewPopupMenuModifyGroup" anchor="last"   />
     </group>
-    <!-- Add your actions here -->
+
     <action id="JavaBeanToTypescriptInterface"
             class="org.freeone.javabean.tsinterface.JavaBeanToTypescriptInterfaceAction"
             text="Save To File"
@@ -101,12 +102,34 @@
             class="org.freeone.javabean.tsinterface.JavaBeanToTypescriptInterfaceAction"
             text="Copy To Clipboard"
             description="Right click on a java bean file and convert it to a typescript interface and copy to clipboard">
+      <add-to-group group-id="javaBeanToTypescriptInterfaceRightClickMenu" anchor="last"   />
+    </action>
+
+    <action id="JavaBeanToTypescriptInterfaceEditAtTextareaToWrapper"
+            class="org.freeone.javabean.tsinterface.JavaBeanToTypescriptInterfaceAction"
+            text="Edit At Textarea"
+            description="Right click on a java bean file and convert it to a typescript interface and show">
       <add-to-group group-id="javaBeanToTypescriptInterfaceRightClickMenu" anchor="last"  />
     </action>
 
-    <action id="JavaBeanToTypescriptInterfaceDisplayToWrapper"
+    <action id="JavaBeanToTypescriptInterface2"
             class="org.freeone.javabean.tsinterface.JavaBeanToTypescriptInterfaceAction"
-            text="Edit At Textarea"
+            text="Save To File 2.0 "
+            description="Right click on a java bean file and convert it to a typescript interface and  save to file">
+      <add-to-group group-id="javaBeanToTypescriptInterfaceRightClickMenu" anchor="first"  />
+    </action>
+
+    <!-- 复制到剪切板 -->
+    <action id="JavaBeanToTypescriptInterfaceCopyToClipboard2"
+            class="org.freeone.javabean.tsinterface.JavaBeanToTypescriptInterfaceAction"
+            text="Copy To Clipboard 2.0"
+            description="Right click on a java bean file and convert it to a typescript interface and copy to clipboard">
+      <add-to-group group-id="javaBeanToTypescriptInterfaceRightClickMenu" anchor="last"  />
+    </action>
+
+    <action id="JavaBeanToTypescriptInterfaceEditAtTextareaToWrapper2"
+            class="org.freeone.javabean.tsinterface.JavaBeanToTypescriptInterfaceAction"
+            text="Edit At Textarea 2.0"
             description="Right click on a java bean file and convert it to a typescript interface and show">
       <add-to-group group-id="javaBeanToTypescriptInterfaceRightClickMenu" anchor="last"  />
     </action>

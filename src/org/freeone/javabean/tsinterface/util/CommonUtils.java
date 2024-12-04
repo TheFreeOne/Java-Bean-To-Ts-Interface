@@ -3,15 +3,21 @@ package org.freeone.javabean.tsinterface.util;
 import com.intellij.core.JavaCoreApplicationEnvironment;
 import com.intellij.core.JavaCoreProjectEnvironment;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.lang.jvm.annotation.JvmAnnotationAttribute;
 import com.intellij.mock.MockProject;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.compiled.ClsAnnotationImpl;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl;
+import com.intellij.psi.impl.source.tree.java.PsiNameValuePairImpl;
+import com.intellij.psi.search.GlobalSearchScope;
+import org.freeone.javabean.tsinterface.setting.JavaBeanToTypescriptInterfaceSettingsState;
 
 import java.io.File;
 import java.util.Arrays;
@@ -26,30 +32,23 @@ public class CommonUtils {
     public static final List<String> requireAnnotationShortNameList = Arrays.asList("NotNull", "NotEmpty", "NotBlank");
 
 
-    /**
-     * Determine whether the field is a numeric type
-     *
-     * @param field
-     * @return
-     */
-    public static boolean isNumber(PsiField field) {
-        List<PsiType> numberSuperClass = Arrays.stream(field.getType().getSuperTypes()).filter(superTypeItem -> superTypeItem.getCanonicalText().equals("java.lang.Number")).collect(Collectors.toList());
-        if (!numberSuperClass.isEmpty()) {
-            return true;
-        }
-        String canonicalText = field.getType().getCanonicalText();
-        if (numberTypes.contains(canonicalText)) {
-            return true;
-        }
-        return false;
-    }
-
     public static boolean isNumberType(PsiType psiType) {
         return Arrays.stream(psiType.getSuperTypes()).anyMatch(ele -> ele.getCanonicalText().contains("java.lang.Number"));
     }
 
     public static boolean isStringType(PsiType psiType) {
         return Arrays.stream(psiType.getSuperTypes()).anyMatch(ele -> ele.getCanonicalText().contains("java.lang.CharSequence"));
+    }
+
+
+    public static PsiClass findPsiClass(Project project, PsiType vType) {
+        GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
+        PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(vType.getCanonicalText(), projectScope);
+        if (psiClass == null && JavaBeanToTypescriptInterfaceSettingsState.getInstance().allowFindClassInAllScope) {
+            GlobalSearchScope allScope = GlobalSearchScope.allScope(project);
+            psiClass = JavaPsiFacade.getInstance(project).findClass(vType.getCanonicalText(), allScope);
+        }
+        return psiClass;
     }
 
 
@@ -67,7 +66,7 @@ public class CommonUtils {
     }
 
     public static String getJavaBeanTypeForArrayField(PsiField field) {
-        if (isArray(field)) {
+        if (isArrayType(field.getType())) {
             PsiType type = field.getType();
 
             if (type instanceof PsiArrayType) {
@@ -125,17 +124,17 @@ public class CommonUtils {
     }
 
     /**
-     * Check whether the field is an array
+     * [] list , set
      *
-     * @param field
      * @return
      */
-    public static boolean isArray(PsiField field) {
-        boolean contains = field.getType().getCanonicalText().endsWith("[]");
+    public static boolean isArrayType(PsiType type ) {
+
+        boolean contains = type.getCanonicalText().endsWith("[]");
         if (contains) {
             return true;
         }
-        PsiType[] superTypes = field.getType().getSuperTypes();
+        PsiType[] superTypes = type.getSuperTypes();
         List<PsiType> collect = Arrays.stream(superTypes).filter(superType -> superType.getCanonicalText().contains("java.util.Collection<")).collect(Collectors.toList());
         if (!collect.isEmpty()) {
             return true;
@@ -143,19 +142,7 @@ public class CommonUtils {
         return false;
     }
 
-    /**
-     * psiType是否是数组
-     *
-     * @param psiType
-     * @return
-     */
-    public static boolean isArrayType(PsiType psiType) {
-        boolean isArrayType = psiType.getCanonicalText().contains("java.util.List") || Arrays.stream(psiType.getSuperTypes()).anyMatch(superType -> superType.getCanonicalText().contains("java.util.Collection<"));
-        if (isArrayType) {
-            System.out.println("isArrayType = true and getArrayDimensions is " + psiType.getArrayDimensions());
-        }
-        return isArrayType;
-    }
+
 
 
     public static boolean isMap(PsiField field) {
@@ -177,21 +164,8 @@ public class CommonUtils {
     }
 
 
-    public static boolean isString(PsiField field) {
-        String presentableText = field.getType().getPresentableText();
-        if (presentableText.equals("String")) {
-            return true;
-        }
-        return false;
-    }
 
-    public static boolean isJavaUtilDate(PsiField field) {
-        String canonicalText = field.getType().getCanonicalText();
-        if (canonicalText.equals("java.util.Date")) {
-            return true;
-        }
-        return false;
-    }
+
 
 
     public static boolean isJavaUtilDateType(PsiType psiType) {
@@ -199,8 +173,8 @@ public class CommonUtils {
     }
 
 
-    public static boolean isBoolean(PsiField field) {
-        String canonicalText = field.getType().getCanonicalText();
+    public static boolean isBooleanType(PsiType psiType) {
+        String canonicalText = psiType.getCanonicalText();
         if ("java.lang.Boolean".equals(canonicalText) || "boolean".equals(canonicalText)) {
             return true;
         } else {
@@ -340,5 +314,79 @@ public class CommonUtils {
             }
         }
         return false;
+    }
+
+    public static String getJsonPropertyValue(PsiField fieldItem, PsiMethod[] allMethods) {
+        String result = null;
+        String name = fieldItem.getName();
+        String getterMethodName = "get" + name;
+        String setterMethodName = "set" + name;
+        PsiAnnotation[] annotations = fieldItem.getAnnotations();
+        for (PsiAnnotation annotation : annotations) {
+            if (result != null) {
+                break;
+            }
+            if (annotation instanceof PsiAnnotationImpl) {
+                PsiAnnotationImpl psiAnnotationImpl = (PsiAnnotationImpl) annotation;
+                String qualifiedName = psiAnnotationImpl.getQualifiedName();
+                if (qualifiedName != null && qualifiedName.equals("com.fasterxml.jackson.annotation.JsonProperty")) {
+                    for (JvmAnnotationAttribute attribute : psiAnnotationImpl.getAttributes()) {
+                        if ("value".equals(attribute.getAttributeName()) && attribute.getAttributeValue() != null) {
+                            if (attribute instanceof PsiNameValuePairImpl) {
+                                PsiNameValuePairImpl psiNameValuePair = (PsiNameValuePairImpl) attribute;
+                                String literalValue = psiNameValuePair.getLiteralValue();
+                                if (literalValue != null && literalValue.trim().length() > 0) {
+                                    result = literalValue;
+                                }
+                            }
+
+                        }
+                    }
+                }
+            } else if (annotation instanceof ClsAnnotationImpl) {
+                ClsAnnotationImpl psiAnnotationImpl = (ClsAnnotationImpl) annotation;
+                result = MyClsGetAnnotationValueUtils.getValue(psiAnnotationImpl);
+            }
+        }
+        // 从方法中获取
+        if (result == null) {
+            for (PsiMethod method : allMethods) {
+                if (method.getName().equalsIgnoreCase(getterMethodName) || method.getName().equalsIgnoreCase(setterMethodName)) {
+                    PsiAnnotation[] methodAnnotations = method.getAnnotations();
+                    for (PsiAnnotation annotation : methodAnnotations) {
+                        if (result != null) {
+                            break;
+                        }
+                        // annotation start
+                        if (annotation instanceof PsiAnnotationImpl) {
+                            PsiAnnotationImpl psiAnnotationImpl = (PsiAnnotationImpl) annotation;
+                            String qualifiedName = psiAnnotationImpl.getQualifiedName();
+                            if (qualifiedName != null && qualifiedName.equals("com.fasterxml.jackson.annotation.JsonProperty")) {
+                                for (JvmAnnotationAttribute attribute : psiAnnotationImpl.getAttributes()) {
+                                    if ("value".equals(attribute.getAttributeName()) && attribute.getAttributeValue() != null) {
+                                        if (attribute instanceof PsiNameValuePairImpl) {
+                                            PsiNameValuePairImpl psiNameValuePair = (PsiNameValuePairImpl) attribute;
+                                            String literalValue = psiNameValuePair.getLiteralValue();
+                                            if (literalValue != null && literalValue.trim().length() > 0) {
+                                                result = literalValue;
+                                                break;
+                                            }
+                                        }
+
+                                    }
+                                }
+                            }
+                        } else if (annotation instanceof ClsAnnotationImpl) {
+                            ClsAnnotationImpl psiAnnotationImpl = (ClsAnnotationImpl) annotation;
+                            result = MyClsGetAnnotationValueUtils.getValue(psiAnnotationImpl);
+                        }
+                        // annotation end
+                    }
+                }
+            }
+        }
+
+
+        return result;
     }
 }
