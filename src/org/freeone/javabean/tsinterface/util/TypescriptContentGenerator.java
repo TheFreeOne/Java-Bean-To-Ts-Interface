@@ -4,6 +4,8 @@ import com.intellij.lang.jvm.JvmClassKind;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
+import com.intellij.psi.impl.source.tree.java.PsiIdentifierImpl;
+import com.intellij.psi.impl.source.tree.java.PsiReferenceParameterListImpl;
 import com.intellij.psi.javadoc.PsiDocComment;
 import org.freeone.javabean.tsinterface.setting.JavaBeanToTypescriptInterfaceSettingsState;
 
@@ -101,22 +103,27 @@ public class TypescriptContentGenerator {
     public static String createTypescriptContentForSinglePsiClass(Project project, PsiClass psiClass) {
         if (psiClass != null) {
             StringBuilder contentBuilder = new StringBuilder();
-            String psiClassName = psiClass.getName();
+            String classNameWithoutPackage = psiClass.getName();
 
-            String qualifiedName = psiClass.getQualifiedName();
-            if (SUCCESS_CANONICAL_TEXT.contains(qualifiedName)) {
-                return psiClassName;
+            String classNameWithPackage = psiClass.getQualifiedName();
+            if (SUCCESS_CANONICAL_TEXT.contains(classNameWithPackage)) {
+                return classNameWithoutPackage;
             }
             // 避免递归调用死循环
-            if (CREATE_TYPESCRIPT_CONTENT_FOR_SINGLE_PSI_CLASS_ENTRY.contains(qualifiedName)) {
-                return psiClassName;
+            if (CREATE_TYPESCRIPT_CONTENT_FOR_SINGLE_PSI_CLASS_ENTRY.contains(classNameWithPackage)) {
+                return classNameWithoutPackage;
             }
-            CREATE_TYPESCRIPT_CONTENT_FOR_SINGLE_PSI_CLASS_ENTRY.add(qualifiedName);
+            CREATE_TYPESCRIPT_CONTENT_FOR_SINGLE_PSI_CLASS_ENTRY.add(classNameWithPackage);
 
-            System.out.println(psiClassName + " qualifiedName " + qualifiedName);
+            System.out.println(classNameWithoutPackage + " qualifiedName " + classNameWithPackage);
 
             JvmClassKind classKind = psiClass.getClassKind();
-
+            try {
+                // 泛型
+                classNameWithoutPackage = CommonUtils.getClassNameWithGenerics(psiClass);
+            } catch (Exception e) {
+//                e.printStackTrace();
+            }
 
             PsiField[] fields = psiClass.getAllFields();
             if (JavaBeanToTypescriptInterfaceSettingsState.getInstance().ignoreParentField) {
@@ -124,7 +131,7 @@ public class TypescriptContentGenerator {
             }
             PsiMethod[] allMethods = psiClass.getAllMethods();
             if (classKind.equals(JvmClassKind.CLASS)) {
-                contentBuilder.append("interface ").append(psiClassName).append(" {\n");
+                contentBuilder.append("interface ").append(classNameWithoutPackage).append(" {\n");
                 for (int i = 0; i < fields.length; i++) {
                     PsiField fieldItem = fields[i];
                     String documentText = "";
@@ -161,7 +168,7 @@ public class TypescriptContentGenerator {
                 }
                 contentBuilder.append("}\n");
             } else if (classKind.equals(JvmClassKind.ENUM)) {
-                contentBuilder.append("type ").append(psiClassName).append(" = ");
+                contentBuilder.append("type ").append(classNameWithoutPackage).append(" = ");
                 List<String> enumConstantValueList = new ArrayList<>();
 //                enumConstantValueList.add("string");
                 for (PsiField psiField : fields) {
@@ -177,18 +184,19 @@ public class TypescriptContentGenerator {
 
             }
             String content = contentBuilder.toString();
-            SUCCESS_CANONICAL_TEXT.add(qualifiedName);
+            SUCCESS_CANONICAL_TEXT.add(classNameWithPackage);
             PsiDocComment classDocComment = psiClass.getDocComment();
             if (classDocComment != null && classDocComment.getText() != null) {
-                CLASS_NAME_WITH_PACKAGE_2_TYPESCRIPT_COMMENT.put(qualifiedName, classDocComment.getText());
+                CLASS_NAME_WITH_PACKAGE_2_TYPESCRIPT_COMMENT.put(classNameWithPackage, classDocComment.getText());
             }
-            CLASS_NAME_WITH_PACKAGE_2_CONTENT.put(qualifiedName, content);
+            CLASS_NAME_WITH_PACKAGE_2_CONTENT.put(classNameWithPackage, content);
 
-            return psiClassName;
+            return classNameWithoutPackage;
         } else {
             return "any";
         }
     }
+
 
     /**
      * 从fieldType中获取类型
@@ -198,7 +206,7 @@ public class TypescriptContentGenerator {
      * @return
      */
     private static String getTypeString(Project project, PsiType fieldType) {
-        String typeString;
+        String typeString = "any";
         if (CommonUtils.isNumberType(fieldType)) {
             typeString = "number";
         } else if (CommonUtils.isStringType(fieldType)) {
@@ -212,8 +220,30 @@ public class TypescriptContentGenerator {
         } else if (CommonUtils.isArrayType(fieldType)) {
             typeString = processList(project, fieldType);
         } else {
-            PsiClass filedClass = CommonUtils.findPsiClass(project, fieldType);
-            typeString = createTypescriptContentForSinglePsiClass(project, filedClass);
+            if (fieldType instanceof PsiClassReferenceType) {
+                PsiClassReferenceType psiClassReferenceType = (PsiClassReferenceType) fieldType;
+                PsiType[] parameters = psiClassReferenceType.getParameters();
+                if (parameters.length != 0) {
+                    // 泛型
+                    for (PsiType parameter : parameters) {
+                        PsiClass parameterClass = CommonUtils.findPsiClass(project, parameter);
+                        createTypescriptContentForSinglePsiClass(project, parameterClass);
+                    }
+                    PsiClass resolvePsiClass = psiClassReferenceType.resolve();
+                    createTypescriptContentForSinglePsiClass(project, resolvePsiClass);
+                    // 类似 PageModel<Student>
+                    typeString = psiClassReferenceType.getPresentableText();
+                } else {
+                    //普通类
+                    PsiClass resolve = psiClassReferenceType.resolve();
+                    typeString = createTypescriptContentForSinglePsiClass(project, resolve);
+                }
+
+            } else {
+                PsiClass filedClass = CommonUtils.findPsiClass(project, fieldType);
+                typeString = createTypescriptContentForSinglePsiClass(project, filedClass);
+            }
+
         }
         return typeString;
     }

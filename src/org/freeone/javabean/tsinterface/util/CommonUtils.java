@@ -389,4 +389,60 @@ public class CommonUtils {
 
         return result;
     }
+
+    /**
+     * 获取类的名称，如果有泛型，就带泛型
+     * @param psiClass
+     * @return
+     */
+    public static String getClassNameWithGenerics(PsiClass psiClass) {
+        if (psiClass == null) {
+            return null;
+        }
+        PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiClass.getProject());
+        // 获取 PsiClass 的类型
+        PsiClassType classType = factory.createType(psiClass);
+        return getClassNameWithGenerics(psiClass, classType);
+    }
+
+    private static String getClassNameWithGenerics(PsiClass psiClass, PsiClassType classType) {
+        // 获取类名（不包含泛型）
+        String classNameWithoutPackage = classType.resolve().getName();
+
+        // 获取泛型参数信息
+        PsiType[] typeArgumentsInClassType = classType.getParameters(); // length maybe 0
+        PsiTypeParameter[] typeParametersInClass = psiClass.getTypeParameters();
+
+        // 如果有泛型参数，构造出类似 List<T> 形式
+        if (typeParametersInClass.length > 0) {
+            StringBuilder builder = new StringBuilder();
+            builder.append(classNameWithoutPackage.substring(classNameWithoutPackage.lastIndexOf('.') + 1))  // 取类名部分
+                    .append("<");
+            for (int i = 0; i < typeParametersInClass.length; i++) {
+                // 泛型占位符 T 或具体类型
+                builder.append(typeParametersInClass[i].getName());
+                if (i < typeParametersInClass.length - 1) {
+                    builder.append(", ");
+                }
+            }
+            builder.append(">");
+            return builder.toString();
+        } else {
+            return classNameWithoutPackage; // 如果没有泛型参数，直接返回类名
+        }
+    }
+
+    public static String getClassNameWithGenericsAndArguments(PsiClass psiClass, PsiType... genericTypes) {
+        if (psiClass == null) {
+            return null;
+        }
+
+        PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiClass.getProject());
+
+        // 如果有泛型参数，创建带有泛型参数的类型
+        PsiClassType classType = factory.createType(psiClass, genericTypes);
+
+        // 获取带有泛型的类名
+        return classType.getCanonicalText();
+    }
 }
