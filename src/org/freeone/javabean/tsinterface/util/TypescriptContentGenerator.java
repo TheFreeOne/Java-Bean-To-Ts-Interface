@@ -4,8 +4,6 @@ import com.intellij.lang.jvm.JvmClassKind;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
-import com.intellij.psi.impl.source.tree.java.PsiIdentifierImpl;
-import com.intellij.psi.impl.source.tree.java.PsiReferenceParameterListImpl;
 import com.intellij.psi.javadoc.PsiDocComment;
 import org.freeone.javabean.tsinterface.setting.JavaBeanToTypescriptInterfaceSettingsState;
 
@@ -105,7 +103,7 @@ public class TypescriptContentGenerator {
             StringBuilder contentBuilder = new StringBuilder();
             String classNameWithoutPackage = psiClass.getName();
             String classNameWithPackage = psiClass.getQualifiedName();
-            if (classNameWithPackage==null) {
+            if (classNameWithPackage == null) {
                 return "any";
             }
 
@@ -209,8 +207,11 @@ public class TypescriptContentGenerator {
      * @return
      */
     private static String getTypeString(Project project, PsiType fieldType) {
+
         String typeString = "any";
-        if (CommonUtils.isNumberType(fieldType)) {
+        if (fieldType == null) {
+            typeString = "any";
+        } else if (CommonUtils.isNumberType(fieldType)) {
             typeString = "number";
         } else if (CommonUtils.isStringType(fieldType)) {
             typeString = "string";
@@ -338,9 +339,8 @@ public class TypescriptContentGenerator {
                     } else {
                         deepComponentType = psiType.getDeepComponentType();
                     }
-                    PsiClass psiClass = CommonUtils.findPsiClass(project, deepComponentType);
-                    createTypescriptContentForSinglePsiClass(project, psiClass);
-                    String firstTsTypeForArray = getFirstTsTypeForArray(project, treeLevel + 1, deepComponentType);
+
+                    String firstTsTypeForArray = getTypeString(project, deepComponentType);
                     return firstTsTypeForArray + "[]";
                 } else {
                     return "any[]";
