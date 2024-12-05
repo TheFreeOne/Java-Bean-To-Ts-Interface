@@ -104,8 +104,11 @@ public class TypescriptContentGenerator {
         if (psiClass != null) {
             StringBuilder contentBuilder = new StringBuilder();
             String classNameWithoutPackage = psiClass.getName();
-
             String classNameWithPackage = psiClass.getQualifiedName();
+            if (classNameWithPackage==null) {
+                return "any";
+            }
+
             if (SUCCESS_CANONICAL_TEXT.contains(classNameWithPackage)) {
                 return classNameWithoutPackage;
             }
