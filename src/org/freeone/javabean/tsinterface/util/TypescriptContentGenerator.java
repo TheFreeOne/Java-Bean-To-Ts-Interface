@@ -103,8 +103,9 @@ public class TypescriptContentGenerator {
             StringBuilder contentBuilder = new StringBuilder();
             String classNameWithoutPackage = psiClass.getName();
             String classNameWithPackage = psiClass.getQualifiedName();
+            // T 这种泛型值
             if (classNameWithPackage == null) {
-                return "any";
+                return classNameWithoutPackage != null ? classNameWithoutPackage : "any";
             }
 
             if (SUCCESS_CANONICAL_TEXT.contains(classNameWithPackage)) {
