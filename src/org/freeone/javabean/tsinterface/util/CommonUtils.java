@@ -33,7 +33,7 @@ public class CommonUtils {
 
 
     public static boolean isNumberType(PsiType psiType) {
-        return Arrays.stream(psiType.getSuperTypes()).anyMatch(ele -> ele.getCanonicalText().contains("java.lang.Number"));
+        return psiType.getCanonicalText().contains("java.lang.Number") || Arrays.stream(psiType.getSuperTypes()).anyMatch(ele -> ele.getCanonicalText().contains("java.lang.Number"));
     }
 
     public static boolean isStringType(PsiType psiType) {
