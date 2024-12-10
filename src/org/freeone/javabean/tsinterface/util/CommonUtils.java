@@ -33,11 +33,11 @@ public class CommonUtils {
 
 
     public static boolean isNumberType(PsiType psiType) {
-        return psiType.getCanonicalText().contains("java.lang.Number") || Arrays.stream(psiType.getSuperTypes()).anyMatch(ele -> ele.getCanonicalText().contains("java.lang.Number"));
+        return "java.lang.Number".equalsIgnoreCase(psiType.getCanonicalText()) || Arrays.stream(psiType.getSuperTypes()).anyMatch(ele -> "java.lang.Number".equalsIgnoreCase(ele.getCanonicalText()));
     }
 
     public static boolean isStringType(PsiType psiType) {
-        return Arrays.stream(psiType.getSuperTypes()).anyMatch(ele -> ele.getCanonicalText().contains("java.lang.CharSequence"));
+        return Arrays.stream(psiType.getSuperTypes()).anyMatch(ele -> "java.lang.CharSequence".equalsIgnoreCase(ele.getCanonicalText()));
     }
 
 
@@ -95,6 +95,7 @@ public class CommonUtils {
 
     /**
      * 获取商品的类型
+     *
      * @param field
      * @return
      */
@@ -110,9 +111,9 @@ public class CommonUtils {
             PsiClassReferenceType psiClassReferenceType = (PsiClassReferenceType) type;
             PsiType deepComponentType = psiClassReferenceType.getDeepComponentType();
             String canonicalText = deepComponentType.getCanonicalText();
-            if(canonicalText.contains("<")) {
+            if (canonicalText.contains("<")) {
                 PsiElement psiContext = psiClassReferenceType.getPsiContext();
-                if (psiContext != null && psiContext.getChildren().length >0) {
+                if (psiContext != null && psiContext.getChildren().length > 0) {
                     PsiElement firstChild = psiContext.getFirstChild();
                     return canonicalText;
                 }
@@ -128,7 +129,7 @@ public class CommonUtils {
      *
      * @return
      */
-    public static boolean isArrayType(PsiType type ) {
+    public static boolean isArrayType(PsiType type) {
 
         boolean contains = type.getCanonicalText().endsWith("[]");
         if (contains) {
@@ -141,8 +142,6 @@ public class CommonUtils {
         }
         return false;
     }
-
-
 
 
     public static boolean isMap(PsiField field) {
@@ -162,10 +161,6 @@ public class CommonUtils {
     public static boolean isMapType(PsiType psiType) {
         return psiType.getCanonicalText().contains("java.util.Map") || Arrays.stream(psiType.getSuperTypes()).filter(superType -> superType.getCanonicalText().contains("java.util.Map")).count() > 0;
     }
-
-
-
-
 
 
     public static boolean isJavaUtilDateType(PsiType psiType) {
@@ -392,6 +387,7 @@ public class CommonUtils {
 
     /**
      * 获取类的名称，如果有泛型，就带泛型
+     *
      * @param psiClass
      * @return
      */
