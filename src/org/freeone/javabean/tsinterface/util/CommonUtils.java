@@ -33,13 +33,12 @@ public class CommonUtils {
 
 
     public static boolean isNumberType(PsiType psiType) {
-        return "java.lang.Number".equalsIgnoreCase(psiType.getCanonicalText()) || Arrays.stream(psiType.getSuperTypes()).anyMatch(ele -> "java.lang.Number".equalsIgnoreCase(ele.getCanonicalText()));
+        return numberTypes.contains(psiType.getCanonicalText()) || "java.lang.Number".equalsIgnoreCase(psiType.getCanonicalText()) || Arrays.stream(psiType.getSuperTypes()).anyMatch(ele -> "java.lang.Number".equalsIgnoreCase(ele.getCanonicalText()));
     }
 
     public static boolean isStringType(PsiType psiType) {
-        return Arrays.stream(psiType.getSuperTypes()).anyMatch(ele -> "java.lang.CharSequence".equalsIgnoreCase(ele.getCanonicalText()));
+        return "char".equalsIgnoreCase(psiType.getCanonicalText()) ||  Arrays.stream(psiType.getSuperTypes()).anyMatch(ele -> "java.lang.CharSequence".equalsIgnoreCase(ele.getCanonicalText()));
     }
-
 
     public static PsiClass findPsiClass(Project project, PsiType vType) {
         GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
