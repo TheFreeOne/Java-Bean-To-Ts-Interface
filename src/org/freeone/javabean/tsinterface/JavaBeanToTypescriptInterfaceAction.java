@@ -51,7 +51,6 @@ public class JavaBeanToTypescriptInterfaceAction extends AnAction {
         String description = Optional.ofNullable(presentation.getDescription()).orElse("");
         String menuText = Optional.ofNullable(presentation.getText()).orElse("");
         try {
-
             if (!menuText.toLowerCase().startsWith("save")) {
                 needSaveToFile = false;
             }
@@ -77,8 +76,40 @@ public class JavaBeanToTypescriptInterfaceAction extends AnAction {
             PsiFile file = psiMgr.findFile(target);
 
             PsiElement psiElement = e.getData(PlatformDataKeys.PSI_ELEMENT);
+            // 当在editor右键的时候psiElement 可能是null的
+            if (  "EditorPopup".equalsIgnoreCase(e.getPlace())) {
+//                psiElement may be null
+                // 在 filed 上右键选择其所属弗雷
+                if (psiElement instanceof PsiField || psiElement instanceof PsiMethod) {
+                    if (psiElement.getParent() != null && psiElement.getParent() instanceof PsiClass) {
+                        psiElement = psiElement.getParent();
+                    }
+                }  else  if (!(psiElement instanceof PsiClass)) {
+                    // psiElement 可能是null的， 这个警告是因为null也不要是psiClass的实例但是这个要知道psiElement 可能是null
+                    if (file instanceof PsiJavaFile) {
+                        PsiJavaFile psiJavaFile = (PsiJavaFile) file;
+                        PsiClass[] classes = psiJavaFile.getClasses();
+                        if (classes.length != 0) {
+                            psiElement = classes[0];
+                        }
+                    }
+
+                }
+            } else {
+                // ProjectViewPopup
+                if (psiElement == null) {
+                    Messages.showInfoMessage("The file is not a java file or class file!", "");
+                    return ;
+                }
+            }
+
+
 
             if (menuText.contains("2") || description.contains("2.0")) {
+                if (psiElement == null) {
+                    Messages.showInfoMessage("Can not find a class", "");
+                    return ;
+                }
                 if (psiElement instanceof PsiClass) {
                     PsiClass psiClass = (PsiClass) psiElement;
                     TypescriptContentGenerator.processPsiClass(project, psiClass,needSaveToFile);
@@ -87,7 +118,7 @@ public class JavaBeanToTypescriptInterfaceAction extends AnAction {
                     generateTypescriptContent(e, project, needSaveToFile, psiClass.getName(), content);
                 }
             } else {
-
+                // 1.0
                 if (file instanceof PsiJavaFile ) {
                     PsiJavaFile psiJavaFile = (PsiJavaFile) file;
                     if (psiElement instanceof PsiClass) {

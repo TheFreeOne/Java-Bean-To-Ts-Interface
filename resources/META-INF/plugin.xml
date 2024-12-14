@@ -2,7 +2,7 @@
 <idea-plugin>
   <id>org.freeone.javabean.tsinterface</id>
   <name>Java Bean 2 TS Interface</name>
-  <version>0.2.5</version>
+  <version>0.2.6</version>
   <vendor email="free077@qq.com" url="https://github.com/TheFreeOne/Java-Bean-To-Ts-Interface">TheFreeOne</vendor>
 
   <description>
@@ -41,6 +41,7 @@
   </description>
 
   <change-notes>
+    0.2.6 支持在editor 右键 , support editor popup menu  &lt;br/&gt;
     0.2.5 "byte", "short", "int", "long", "double", "float"  &lt;br/&gt;
     0.2.4 支持 类型直接是 java.lang.Number  &lt;br/&gt;
     0.2.3 &lt;T&gt;  &lt;br/&gt;
@@ -91,8 +92,14 @@
 
 
   <actions>
+
+
+
+
+
     <group id="javaBeanToTypescriptInterfaceRightClickMenu" text="(→ . →) Java Bean to Typescript Interface" description="Java bean to typescript interface actions group" popup="true" >
       <add-to-group group-id="ProjectViewPopupMenuModifyGroup" anchor="last"   />
+      <add-to-group group-id="EditorPopupMenu" anchor="last"/>
     </group>
 
     <group id="javaBeanToTypescriptInterfaceRightClickMenu1" text="1.0/Old Logic" description="旧逻辑" popup="true" >
