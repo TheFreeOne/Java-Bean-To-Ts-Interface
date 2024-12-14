@@ -14,8 +14,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.compiled.ClsClassImpl;
-import com.intellij.psi.impl.source.PsiClassImpl;
 import org.freeone.javabean.tsinterface.swing.SampleDialogWrapper;
 import org.freeone.javabean.tsinterface.swing.TypescriptInterfaceShowerWrapper;
 import org.freeone.javabean.tsinterface.util.CommonUtils;
@@ -38,14 +36,14 @@ import java.util.Optional;
  */
 public class JavaBeanToTypescriptInterfaceAction extends AnAction {
 
-    public static final String requireSplitTag = ": ";
-    public static final String notRequireSplitTag = "?: ";
-
     private final NotificationGroup notificationGroup = new NotificationGroup("JavaBeanToTypescriptInterface", NotificationDisplayType.STICKY_BALLOON, true);
 
     @Override
     public void actionPerformed(AnActionEvent e) {
         Project project = e.getProject();
+        if (project == null) {
+            return;
+        }
         boolean needSaveToFile = true;
         Presentation presentation = e.getPresentation();
         String description = Optional.ofNullable(presentation.getDescription()).orElse("");
@@ -65,78 +63,72 @@ public class JavaBeanToTypescriptInterfaceAction extends AnAction {
                 Messages.showInfoMessage("Please choose a Java Bean file !", "");
                 return;
             }
-            String fileTypeName = target.getFileType().getName();
-            if (!"JAVA".equalsIgnoreCase(fileTypeName) && !"CLASS".equalsIgnoreCase(fileTypeName)) {
-                Messages.showInfoMessage("The file is not a java file or class file!", "");
-            }
-            if (project == null) {
-                return;
-            }
             PsiManager psiMgr = PsiManager.getInstance(project);
             PsiFile file = psiMgr.findFile(target);
-
+            if (!(file instanceof PsiJavaFile)) {
+                Messages.showInfoMessage("Unsupported source file!", "");
+                return;
+            }
             PsiElement psiElement = e.getData(PlatformDataKeys.PSI_ELEMENT);
             // 当在editor右键的时候psiElement 可能是null的
-            if (  "EditorPopup".equalsIgnoreCase(e.getPlace())) {
+            if ("EditorPopup".equalsIgnoreCase(e.getPlace())) {
+
+
 //                psiElement may be null
                 // 在 filed 上右键选择其所属弗雷
                 if (psiElement instanceof PsiField || psiElement instanceof PsiMethod) {
                     if (psiElement.getParent() != null && psiElement.getParent() instanceof PsiClass) {
                         psiElement = psiElement.getParent();
                     }
-                }  else  if (!(psiElement instanceof PsiClass)) {
+                } else if (!(psiElement instanceof PsiClass)) {
                     // psiElement 可能是null的， 这个警告是因为null也不要是psiClass的实例但是这个要知道psiElement 可能是null
-                    if (file instanceof PsiJavaFile) {
-                        PsiJavaFile psiJavaFile = (PsiJavaFile) file;
-                        PsiClass[] classes = psiJavaFile.getClasses();
-                        if (classes.length != 0) {
-                            psiElement = classes[0];
-                        }
+                    PsiJavaFile psiJavaFile = (PsiJavaFile) file;
+                    PsiClass[] classes = psiJavaFile.getClasses();
+                    if (classes.length != 0) {
+                        psiElement = classes[0];
                     }
-
                 }
 
                 if (psiElement == null) {
                     Messages.showInfoMessage("Can not find a class!", "");
-                    return ;
+                    return;
                 }
             } else {
                 // ProjectViewPopup
                 if (psiElement == null) {
                     Messages.showInfoMessage("Can not find a class", "");
-                    return ;
+                    return;
                 }
             }
-
 
 
             if (menuText.contains("2") || description.contains("2.0")) {
                 if (psiElement == null) {
                     Messages.showInfoMessage("Can not find a class", "");
-                    return ;
+                    return;
                 }
                 if (psiElement instanceof PsiClass) {
                     PsiClass psiClass = (PsiClass) psiElement;
-                    TypescriptContentGenerator.processPsiClass(project, psiClass,needSaveToFile);
+                    TypescriptContentGenerator.processPsiClass(project, psiClass, needSaveToFile);
                     String content = TypescriptContentGenerator.mergeContent(psiClass, needSaveToFile);
                     TypescriptContentGenerator.clearCache();
                     generateTypescriptContent(e, project, needSaveToFile, psiClass.getName(), content);
                 }
             } else {
                 // 1.0
-                if (file instanceof PsiJavaFile ) {
+                if (file instanceof PsiJavaFile) {
                     PsiJavaFile psiJavaFile = (PsiJavaFile) file;
                     if (psiElement instanceof PsiClass) {
                         PsiClass psiClass = (PsiClass) psiElement;
                         boolean innerPublicClass = CommonUtils.isInnerPublicClass(psiJavaFile, psiClass);
-                        if (innerPublicClass){
+                        if (innerPublicClass) {
                             SampleDialogWrapper sampleDialogWrapper = new SampleDialogWrapper();
                             boolean b = sampleDialogWrapper.showAndGet();
                             if (b) {
                                 // 只有内部public static class 会执行这一步psiClass
                                 String interfaceContent = TypescriptUtils.generatorInterfaceContentForPsiClassElement(project, psiClass, needSaveToFile);
                                 generateTypescriptContent(e, project, needSaveToFile, psiClass.getName(), interfaceContent);
-                                return ;
+                                return;
                             }
                         }
                     }
@@ -157,6 +149,7 @@ public class JavaBeanToTypescriptInterfaceAction extends AnAction {
 
     /**
      * 针对interfaceContent进行处理，生成内容生成内容
+     *
      * @param e
      * @param project
      * @param saveToFile
