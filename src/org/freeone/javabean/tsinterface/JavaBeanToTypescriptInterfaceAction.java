@@ -95,10 +95,15 @@ public class JavaBeanToTypescriptInterfaceAction extends AnAction {
                     }
 
                 }
+
+                if (psiElement == null) {
+                    Messages.showInfoMessage("Can not find a class!", "");
+                    return ;
+                }
             } else {
                 // ProjectViewPopup
                 if (psiElement == null) {
-                    Messages.showInfoMessage("The file is not a java file or class file!", "");
+                    Messages.showInfoMessage("Can not find a class", "");
                     return ;
                 }
             }
