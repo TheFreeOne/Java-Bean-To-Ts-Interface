@@ -1,5 +1,6 @@
 package org.freeone.javabean.tsinterface;
 
+import com.intellij.lang.jvm.JvmClassKind;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
@@ -14,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.PsiExtensibleClass;
 import org.freeone.javabean.tsinterface.swing.SampleDialogWrapper;
 import org.freeone.javabean.tsinterface.swing.TypescriptInterfaceShowerWrapper;
 import org.freeone.javabean.tsinterface.util.CommonUtils;
@@ -87,6 +89,17 @@ public class JavaBeanToTypescriptInterfaceAction extends AnAction {
                     if (classes.length != 0) {
                         psiElement = classes[0];
                     }
+                } else if (psiElement instanceof PsiExtensibleClass) {
+                    PsiExtensibleClass psiExtensibleClass = (PsiExtensibleClass) psiElement;
+                    JvmClassKind classKind = psiExtensibleClass.getClassKind();
+                    // 注解
+                    if (classKind == JvmClassKind.ANNOTATION) {
+                        PsiJavaFile psiJavaFile = (PsiJavaFile) file;
+                        PsiClass[] classes = psiJavaFile.getClasses();
+                        if (classes.length != 0) {
+                            psiElement = classes[0];
+                        }
+                    }
                 }
 
                 if (psiElement == null) {
@@ -156,7 +169,8 @@ public class JavaBeanToTypescriptInterfaceAction extends AnAction {
      * @param fileNameToSave
      * @param interfaceContent
      */
-    private void generateTypescriptContent(AnActionEvent e, Project project, boolean saveToFile, String fileNameToSave, String interfaceContent) {
+    private void generateTypescriptContent(AnActionEvent e, Project project, boolean saveToFile, String
+            fileNameToSave, String interfaceContent) {
         if (saveToFile) {
             FileChooserDescriptor chooserDescriptor = CommonUtils.createFileChooserDescriptor("Choose a folder", "The declaration file end with '.d.ts' will be saved in this folder");
             VirtualFile savePathFile = FileChooser.chooseFile(chooserDescriptor, null, null);
