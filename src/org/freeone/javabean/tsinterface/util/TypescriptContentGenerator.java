@@ -62,7 +62,7 @@ public class TypescriptContentGenerator {
         for (String classNameWithPackage : SUCCESS_CANONICAL_TEXT) {
             StringBuilder stringBuilder = new StringBuilder();
             String content = CLASS_NAME_WITH_PACKAGE_2_CONTENT.get(classNameWithPackage);
-            if (content != null) {
+            if (content != null && content.length() > 0) {
                 // 以后做成一个配置项
 //                 stringBuilder.append(" /**\n" + "  * @packageName ").append(classNameWithPackage).append(" \n").append("  */\n");
                 String psiClassCComment = CLASS_NAME_WITH_PACKAGE_2_TYPESCRIPT_COMMENT.get(classNameWithPackage);
@@ -184,6 +184,8 @@ public class TypescriptContentGenerator {
                 String join = String.join(" | ", enumConstantValueList);
                 contentBuilder.append(join).append("\n");
 
+            } else {
+                return "unknown";
             }
             String content = contentBuilder.toString();
             SUCCESS_CANONICAL_TEXT.add(classNameWithPackage);
