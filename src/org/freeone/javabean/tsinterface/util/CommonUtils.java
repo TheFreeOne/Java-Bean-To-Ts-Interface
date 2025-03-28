@@ -124,6 +124,7 @@ public class CommonUtils {
     }
 
     /**
+     * java中是类似List<String>
      * [] list , set
      *
      * @return
@@ -135,7 +136,26 @@ public class CommonUtils {
             return true;
         }
         PsiType[] superTypes = type.getSuperTypes();
-        List<PsiType> collect = Arrays.stream(superTypes).filter(superType -> superType.getCanonicalText().contains("java.util.Collection<")).collect(Collectors.toList());
+//        List<PsiType> collect = Arrays.stream(superTypes).filter(superType -> superType.getCanonicalText().contains("java.util.Collection<")).collect(Collectors.toList());
+        List<PsiType> collect = Arrays.stream(superTypes).filter(superType -> superType.getCanonicalText().contains("java.util.Collection")).collect(Collectors.toList());
+        if (!collect.isEmpty()) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * java中是 Set List这种，没有泛型
+     * @param type
+     * @return
+     */
+    public static boolean isArrayWithoutType(PsiType type) {
+        boolean contains = type.getCanonicalText().endsWith("[]");
+        if (contains) {
+            return true;
+        }
+        PsiType[] superTypes = type.getSuperTypes();
+        List<PsiType> collect = Arrays.stream(superTypes).filter(superType -> superType.getCanonicalText().equalsIgnoreCase("java.util.Collection")).collect(Collectors.toList());
         if (!collect.isEmpty()) {
             return true;
         }

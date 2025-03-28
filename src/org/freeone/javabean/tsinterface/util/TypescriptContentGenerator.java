@@ -138,9 +138,27 @@ public class TypescriptContentGenerator {
                     PsiField fieldItem = fields[i];
                     String documentText = "";
                     // 获取注释
-                    PsiDocComment docComment = fieldItem.getDocComment();
-                    if (docComment != null && docComment.getText() != null) {
-                        documentText = docComment.getText();
+                    PsiDocComment fieldItemDocComment = fieldItem.getDocComment();
+                    if (fieldItemDocComment != null && fieldItemDocComment.getText() != null) {
+                        documentText = fieldItemDocComment.getText();
+                        try {
+                            StringBuilder result = new StringBuilder();
+                            String[] lines = documentText.split("\\r?\\n");
+                            for (int fieldDocumentLineIndex = 0; fieldDocumentLineIndex < lines.length; fieldDocumentLineIndex++) {
+                                String line = lines[fieldDocumentLineIndex];
+                                if (line.trim().startsWith("*")) {
+                                    result.append("   ").append(line.trim());
+                                } else {
+                                    result.append(line);
+                                }
+                                if (fieldDocumentLineIndex != lines.length - 1) {
+                                    result.append("\n");
+                                }
+                            }
+                            documentText = result.toString();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     }
                     String fieldName = fieldItem.getName();
                     //  2023-12-26 判断是或否使用JsonProperty

@@ -67,6 +67,7 @@ public class JavaBeanToTypescriptInterfaceAction extends AnAction {
             }
             PsiManager psiMgr = PsiManager.getInstance(project);
             PsiFile file = psiMgr.findFile(target);
+            // 非PsiJavaFile的不执行
             if (!(file instanceof PsiJavaFile)) {
                 Messages.showInfoMessage("Unsupported source file!", "");
                 return;
@@ -129,29 +130,27 @@ public class JavaBeanToTypescriptInterfaceAction extends AnAction {
                 }
             } else {
                 // 1.0
-                if (file instanceof PsiJavaFile) {
-                    PsiJavaFile psiJavaFile = (PsiJavaFile) file;
-                    if (psiElement instanceof PsiClass) {
-                        PsiClass psiClass = (PsiClass) psiElement;
-                        boolean innerPublicClass = CommonUtils.isInnerPublicClass(psiJavaFile, psiClass);
-                        if (innerPublicClass) {
-                            SampleDialogWrapper sampleDialogWrapper = new SampleDialogWrapper();
-                            boolean b = sampleDialogWrapper.showAndGet();
-                            if (b) {
-                                // 只有内部public static class 会执行这一步psiClass
-                                String interfaceContent = TypescriptUtils.generatorInterfaceContentForPsiClassElement(project, psiClass, needSaveToFile);
-                                generateTypescriptContent(e, project, needSaveToFile, psiClass.getName(), interfaceContent);
-                                return;
-                            }
+                PsiJavaFile psiJavaFile = (PsiJavaFile) file;
+                if (psiElement instanceof PsiClass) {
+                    PsiClass psiClass = (PsiClass) psiElement;
+                    boolean innerPublicClass = CommonUtils.isInnerPublicClass(psiJavaFile, psiClass);
+                    if (innerPublicClass) {
+                        SampleDialogWrapper sampleDialogWrapper = new SampleDialogWrapper();
+                        boolean b = sampleDialogWrapper.showAndGet();
+                        if (b) {
+                            // 只有内部public static class 会执行这一步psiClass
+                            String interfaceContent = TypescriptUtils.generatorInterfaceContentForPsiClassElement(project, psiClass, needSaveToFile);
+                            generateTypescriptContent(e, project, needSaveToFile, psiClass.getName(), interfaceContent);
+                            return;
                         }
                     }
-
-                    // 正常情况下
-                    // 声明文件的主要内容 || content of *.d.ts
-                    String interfaceContent = TypescriptUtils.generatorInterfaceContentForPsiJavaFile(project, psiJavaFile, needSaveToFile);
-                    generateTypescriptContent(e, project, needSaveToFile, psiJavaFile.getVirtualFile().getNameWithoutExtension(), interfaceContent);
-
                 }
+
+                // 正常情况下
+                // 声明文件的主要内容 || content of *.d.ts
+                String interfaceContent = TypescriptUtils.generatorInterfaceContentForPsiJavaFile(project, psiJavaFile, needSaveToFile);
+                generateTypescriptContent(e, project, needSaveToFile, psiJavaFile.getVirtualFile().getNameWithoutExtension(), interfaceContent);
+
             }
 
 
