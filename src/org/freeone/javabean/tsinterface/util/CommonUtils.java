@@ -1,15 +1,9 @@
 package org.freeone.javabean.tsinterface.util;
 
-import com.intellij.core.JavaCoreApplicationEnvironment;
-import com.intellij.core.JavaCoreProjectEnvironment;
-import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.jvm.annotation.JvmAnnotationAttribute;
-import com.intellij.mock.MockProject;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.compiled.ClsAnnotationImpl;
@@ -19,10 +13,8 @@ import com.intellij.psi.impl.source.tree.java.PsiNameValuePairImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.freeone.javabean.tsinterface.setting.JavaBeanToTypescriptInterfaceSettingsState;
 
-import java.io.File;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 public class CommonUtils {
@@ -37,7 +29,7 @@ public class CommonUtils {
     }
 
     public static boolean isStringType(PsiType psiType) {
-        return "char".equalsIgnoreCase(psiType.getCanonicalText()) ||  Arrays.stream(psiType.getSuperTypes()).anyMatch(ele -> "java.lang.CharSequence".equalsIgnoreCase(ele.getCanonicalText()));
+        return "char".equalsIgnoreCase(psiType.getCanonicalText()) || Arrays.stream(psiType.getSuperTypes()).anyMatch(ele -> "java.lang.CharSequence".equalsIgnoreCase(ele.getCanonicalText()));
     }
 
     public static PsiClass findPsiClass(Project project, PsiType vType) {
@@ -146,6 +138,7 @@ public class CommonUtils {
 
     /**
      * java中是 Set List这种，没有泛型
+     *
      * @param type
      * @return
      */
@@ -225,7 +218,6 @@ public class CommonUtils {
         return false;
     }
 
-    private static ExecutorService cachedThreadPool;
 
 //    private static final String baseDir = "/home/patrick/tmp";
 //    private static final String sourceFile = "TestClass.java";
@@ -238,58 +230,6 @@ public class CommonUtils {
 //        FileASTNode node = parseJavaSource(javaSource, psiFileFactory);
 //
 //    }
-
-    /**
-     * 解析java文件
-     *
-     * @param absolutePath
-     * @return
-     * @throws Exception
-     */
-    public static PsiJavaFile parseJavaFile(String absolutePath) throws Exception {
-        PsiFileFactory psiFileFactory = createPsiFactory();
-        File file = new File(absolutePath);
-        String javaSource = FileUtil.loadFile(file);
-        return parseJavaSource(javaSource, psiFileFactory);
-    }
-
-    private static PsiFileFactory createPsiFactory() {
-        MockProject mockProject = createProject();
-        return PsiFileFactory.getInstance(mockProject);
-    }
-
-    private static PsiJavaFile parseJavaSource(String JAVA_SOURCE, PsiFileFactory psiFileFactory) {
-        PsiFile psiFile = psiFileFactory.createFileFromText("__dummy_file__.java", JavaFileType.INSTANCE, JAVA_SOURCE);
-
-        if (psiFile instanceof PsiJavaFile) {
-//        return psiJavaFile.getNode();
-            return (PsiJavaFile) psiFile;
-        } else {
-            throw new RuntimeException("Target is not a valid java file");
-        }
-    }
-
-    private static MockProject createProject() {
-        JavaCoreProjectEnvironment environment = new JavaCoreProjectEnvironment(new Disposable() {
-            @Override
-            public void dispose() {
-            }
-        }, new JavaCoreApplicationEnvironment(new Disposable() {
-            @Override
-            public void dispose() {
-            }
-        }));
-
-        return environment.getProject();
-    }
-
-    public static synchronized ExecutorService getCachedThreadPool() {
-        if (cachedThreadPool == null) {
-            cachedThreadPool = Executors.newCachedThreadPool();
-        }
-        ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(1, Integer.MAX_VALUE, 0L, TimeUnit.SECONDS, new LinkedBlockingQueue<>(100));
-        return cachedThreadPool;
-    }
 
     /**
      * 获取一个文件选择描述器
@@ -422,14 +362,18 @@ public class CommonUtils {
 
     private static String getClassNameWithGenerics(PsiClass psiClass, PsiClassType classType) {
         // 获取类名（不包含泛型）
-        String classNameWithoutPackage = classType.resolve().getName();
+        PsiClass resolve = classType.resolve();
+        if (resolve == null) {
+            return "unknown";
+        }
+        String classNameWithoutPackage = resolve.getName();
 
         // 获取泛型参数信息
         PsiType[] typeArgumentsInClassType = classType.getParameters(); // length maybe 0
         PsiTypeParameter[] typeParametersInClass = psiClass.getTypeParameters();
 
         // 如果有泛型参数，构造出类似 List<T> 形式
-        if (typeParametersInClass.length > 0) {
+        if (typeParametersInClass.length > 0 && classNameWithoutPackage != null) {
             StringBuilder builder = new StringBuilder();
             builder.append(classNameWithoutPackage.substring(classNameWithoutPackage.lastIndexOf('.') + 1))  // 取类名部分
                     .append("<");

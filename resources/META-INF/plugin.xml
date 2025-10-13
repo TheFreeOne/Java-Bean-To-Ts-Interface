@@ -2,7 +2,7 @@
 <idea-plugin>
   <id>org.freeone.javabean.tsinterface</id>
   <name>Java Bean 2 TS Interface</name>
-  <version>0.2.8</version>
+  <version>0.2.9</version>
   <vendor email="free077@qq.com" url="https://github.com/TheFreeOne/Java-Bean-To-Ts-Interface">TheFreeOne</vendor>
 
   <description>
@@ -41,6 +41,7 @@
   </description>
 
   <change-notes>
+    0.2.9 去掉一些不使用的方式;Remove some unused methods. &lt;br/&gt;
     0.2.8 Set &lt;br/&gt;
     0.2.7 若字段是接口则unknown;type of filed is interface , as unknown &lt;br/&gt;
     0.2.6 支持在editor的空白处右键或者在其中的某个类上右键 , support editor or a class in editor popup menu  &lt;br/&gt;
