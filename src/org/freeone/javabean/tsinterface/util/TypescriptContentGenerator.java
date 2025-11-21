@@ -230,7 +230,7 @@ public class TypescriptContentGenerator {
     private static String getTypeString(Project project, PsiType fieldType) {
 
         String typeString = "any";
-        if (fieldType == null) {
+        if (fieldType == null || CommonUtils.isPlainObject(fieldType)) {
             typeString = "any";
         } else if (CommonUtils.isNumberType(fieldType)) {
             typeString = "number";

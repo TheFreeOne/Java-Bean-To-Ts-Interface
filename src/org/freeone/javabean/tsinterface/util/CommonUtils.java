@@ -23,6 +23,10 @@ public class CommonUtils {
 
     public static final List<String> requireAnnotationShortNameList = Arrays.asList("NotNull", "NotEmpty", "NotBlank");
 
+    public static Boolean isPlainObject(PsiType psiType) {
+        String canonicalText = psiType.getCanonicalText();
+        return "java.lang.Object".equalsIgnoreCase(canonicalText);
+    }
 
     public static boolean isNumberType(PsiType psiType) {
         return numberTypes.contains(psiType.getCanonicalText()) || "java.lang.Number".equalsIgnoreCase(psiType.getCanonicalText()) || Arrays.stream(psiType.getSuperTypes()).anyMatch(ele -> "java.lang.Number".equalsIgnoreCase(ele.getCanonicalText()));
