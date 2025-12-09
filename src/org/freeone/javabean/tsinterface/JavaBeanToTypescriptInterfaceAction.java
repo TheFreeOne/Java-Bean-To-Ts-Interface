@@ -179,7 +179,13 @@ public class JavaBeanToTypescriptInterfaceAction extends AnAction {
                 if (psiElement instanceof PsiClass) {
                     PsiClass psiClass = (PsiClass) psiElement;
                     String json = MockAllFieldJsonUtils.generateJsonFromClass(project, psiClass);
-                    System.out.println(json);
+//                    System.out.println(json);
+                    Clipboard systemClipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+                    Transferable tText = new StringSelection(json);
+                    systemClipboard.setContents(tText, null);
+                    Notification notification = notificationGroup.createNotification("Copy To Clipboard Completed", NotificationType.INFORMATION);
+                    notification.setImportant(false).notify(project);
+                    return;
                 } else {
                     Messages.showInfoMessage("Can not find a class", "");
                 }
