@@ -2,7 +2,7 @@
 <idea-plugin>
   <id>org.freeone.javabean.tsinterface</id>
   <name>Java Bean 2 TS Interface</name>
-  <version>0.3.1</version>
+  <version>0.4.0</version>
   <vendor email="free077@qq.com" url="https://github.com/TheFreeOne/Java-Bean-To-Ts-Interface">TheFreeOne</vendor>
 
   <description>
@@ -41,6 +41,7 @@
   </description>
 
   <change-notes>
+    0.4.0 模拟json;mock json &lt;br/&gt;
     0.3.1 Object => any &lt;br/&gt;
     0.3.0 支持选择多个java文件保存成.d.ts文件;Support the option to save multiple Java files as .d.ts files. &lt;br/&gt;
     0.2.9 去掉一些不使用的方法;Remove some unused methods. &lt;br/&gt;
@@ -99,7 +100,9 @@
   <actions>
 
     <group id="javaBeanToTypescriptInterfaceRightClickMenu" text="(→ . →) Java Bean to Typescript Interface" description="Java bean to typescript interface actions group" popup="true" >
+      <!--左侧项目分组针对某个类进行右键-->
       <add-to-group group-id="ProjectViewPopupMenuModifyGroup" anchor="last"   />
+      <!--编辑器右键,最后-->
       <add-to-group group-id="EditorPopupMenu" anchor="last"/>
     </group>
 
@@ -148,6 +151,14 @@
             text="Edit In Textarea"
             description="Right click on a java bean file and convert it to a typescript interface and displayed in textarea 2.0 ">
       <add-to-group group-id="javaBeanToTypescriptInterfaceRightClickMenu" relative-to-action="JavaBeanToTypescriptInterfaceCopyToClipboard2" anchor="after" />
+    </action>
+
+    <action id="JavaBeanToTypescriptInterfaceMockJson"
+            class="org.freeone.javabean.tsinterface.JavaBeanToTypescriptInterfaceAction"
+            text="Mock Json"
+            description="Mock json">
+      <!--添加到这个分组 的JavaBeanToTypescriptInterfaceEditAtTextareaToWrapper2的后面-->
+      <add-to-group group-id="javaBeanToTypescriptInterfaceRightClickMenu" relative-to-action="JavaBeanToTypescriptInterfaceEditAtTextareaToWrapper2" anchor="after" />
     </action>
   </actions>
 

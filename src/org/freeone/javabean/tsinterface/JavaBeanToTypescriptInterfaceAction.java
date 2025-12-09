@@ -13,9 +13,9 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiExtensibleClass;
-import com.intellij.psi.impl.source.PsiJavaFileImpl;
 import org.freeone.javabean.tsinterface.swing.TypescriptInterfaceShowerWrapper;
 import org.freeone.javabean.tsinterface.util.CommonUtils;
+import org.freeone.javabean.tsinterface.util.MockJsonUtils;
 import org.freeone.javabean.tsinterface.util.TypescriptContentGenerator;
 import org.jetbrains.annotations.NotNull;
 
@@ -63,6 +63,9 @@ public class JavaBeanToTypescriptInterfaceAction extends AnAction {
         Presentation presentation = e.getPresentation();
         String description = Optional.ofNullable(presentation.getDescription()).orElse("");
         String menuText = Optional.ofNullable(presentation.getText()).orElse("");
+
+        boolean isMockJson = menuText.toLowerCase().contains("mock json");
+
         try {
             if (!menuText.toLowerCase().startsWith("save")) {
                 needSaveToFile = false;
@@ -76,16 +79,25 @@ public class JavaBeanToTypescriptInterfaceAction extends AnAction {
             return;
         }
         List<VirtualFile> virtualFileList = Arrays.asList(virtualFiles);
+        // 不支持json
         boolean containDirectory = virtualFileList.stream().anyMatch(VirtualFile::isDirectory);
         if (containDirectory) {
             Messages.showInfoMessage("Do Not choose directory !", "");
             return;
         }
+        // 需包含java文件
         virtualFileList = virtualFileList.stream().filter(file -> "java".equals(file.getExtension()) || "class".equals(file.getExtension())).collect(Collectors.toList());
         if (virtualFileList.isEmpty()) {
             Messages.showInfoMessage("Please select the Java file.", "Tips");
             return;
         }
+        // 模拟json不支持多文件操作
+        if (isMockJson && virtualFileList.size() > 1) {
+            Messages.showInfoMessage("The current function does not support multiple files", "");
+            return;
+        }
+
+        // 其他操作
         if (!needSaveToFile && virtualFileList.size() > 1) {
             Messages.showInfoMessage("The current function does not support multiple files", "");
             return;
@@ -146,8 +158,8 @@ public class JavaBeanToTypescriptInterfaceAction extends AnAction {
                 }
             } else {
                 // ProjectViewPopup
-                if (psiElement == null   ) {
-                    if ( file instanceof PsiClass) {
+                if (psiElement == null) {
+                    if (file instanceof PsiClass) {
                         psiElement = file;
                     } else {
                         PsiJavaFile psiJavaFile = (PsiJavaFile) file;
@@ -162,8 +174,17 @@ public class JavaBeanToTypescriptInterfaceAction extends AnAction {
                 }
             }
 
-
-            if (menuText.contains("2") || description.contains("2.0")) {
+            // psiElement 使我们主要操作的目标
+            if (isMockJson) {
+                if (psiElement instanceof PsiClass) {
+                    PsiClass psiClass = (PsiClass) psiElement;
+                    String json = MockJsonUtils.generateJsonFromClass(project, psiClass);
+                    System.out.println(json);
+                } else {
+                    Messages.showInfoMessage("Can not find a class", "");
+                }
+                return;
+            } else if (menuText.contains("2") || description.contains("2.0")) {
                 if (psiElement instanceof PsiClass) {
                     PsiClass psiClass = (PsiClass) psiElement;
                     TypescriptContentGenerator.processPsiClass(project, psiClass, needSaveToFile);
