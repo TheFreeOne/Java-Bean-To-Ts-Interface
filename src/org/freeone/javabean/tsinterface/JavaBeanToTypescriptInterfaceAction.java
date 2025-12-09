@@ -64,7 +64,7 @@ public class JavaBeanToTypescriptInterfaceAction extends AnAction {
         String description = Optional.ofNullable(presentation.getDescription()).orElse("");
         String menuText = Optional.ofNullable(presentation.getText()).orElse("");
 
-        boolean isMockJson = menuText.toLowerCase().contains("mock json");
+        boolean isMockJson = menuText.equalsIgnoreCase("mock all field into json");
 
         try {
             if (!menuText.toLowerCase().startsWith("save")) {
@@ -179,7 +179,7 @@ public class JavaBeanToTypescriptInterfaceAction extends AnAction {
                 if (psiElement instanceof PsiClass) {
                     PsiClass psiClass = (PsiClass) psiElement;
                     String json = MockAllFieldJsonUtils.generateJsonFromClass(project, psiClass);
-//                    System.out.println(json);
+                    System.out.println(json);
                     Clipboard systemClipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
                     Transferable tText = new StringSelection(json);
                     systemClipboard.setContents(tText, null);
