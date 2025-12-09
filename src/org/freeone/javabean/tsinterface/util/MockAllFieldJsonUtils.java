@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class MockJsonUtils {
+public class MockAllFieldJsonUtils {
     private static final Set<String> COLLECTION_INTERFACES = new HashSet<>(
             Arrays.asList("java.util.List", "java.util.Set", "java.util.Collection")
     );

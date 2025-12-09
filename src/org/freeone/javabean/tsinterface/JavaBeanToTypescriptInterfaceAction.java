@@ -15,7 +15,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiExtensibleClass;
 import org.freeone.javabean.tsinterface.swing.TypescriptInterfaceShowerWrapper;
 import org.freeone.javabean.tsinterface.util.CommonUtils;
-import org.freeone.javabean.tsinterface.util.MockJsonUtils;
+import org.freeone.javabean.tsinterface.util.MockAllFieldJsonUtils;
 import org.freeone.javabean.tsinterface.util.TypescriptContentGenerator;
 import org.jetbrains.annotations.NotNull;
 
@@ -178,7 +178,7 @@ public class JavaBeanToTypescriptInterfaceAction extends AnAction {
             if (isMockJson) {
                 if (psiElement instanceof PsiClass) {
                     PsiClass psiClass = (PsiClass) psiElement;
-                    String json = MockJsonUtils.generateJsonFromClass(project, psiClass);
+                    String json = MockAllFieldJsonUtils.generateJsonFromClass(project, psiClass);
                     System.out.println(json);
                 } else {
                     Messages.showInfoMessage("Can not find a class", "");
