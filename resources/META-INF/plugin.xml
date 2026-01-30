@@ -41,7 +41,7 @@
   </description>
 
   <change-notes>
-    0.3.3 2025.1.7中AnAction无法获取文件,设置update方法中file为null也开启 &lt;br/&gt;
+    0.3.3 2025.1.7中AnAction无法获取文件,设置update方法中file为null也开启;bugfix &lt;br/&gt;
     0.3.2 模拟全部字段并放到json中;mock all fields into json &lt;br/&gt;
     0.3.1 Object => any &lt;br/&gt;
     0.3.0 支持选择多个java文件保存成.d.ts文件;Support the option to save multiple Java files as .d.ts files. &lt;br/&gt;
