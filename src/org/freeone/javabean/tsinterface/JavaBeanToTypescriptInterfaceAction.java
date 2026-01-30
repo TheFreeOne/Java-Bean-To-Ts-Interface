@@ -46,10 +46,17 @@ public class JavaBeanToTypescriptInterfaceAction extends AnAction {
         Project project = e.getProject();
         VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
 
+
+        e.getPresentation().setVisible(true);
+        e.getPresentation().setEnabled(true); // 可选：同时控制是否可点击
+        // 2025.1.7 中无法获取到文件
+        if (file == null) {
+            return;
+        }
         // 示例：只在选中 .txt 文件时显示
-        boolean visible = file != null && ("java".equals(file.getExtension()) || "class".equals(file.getExtension()));
+        boolean visible = ("java".equals(file.getExtension()) || "class".equals(file.getExtension()));
         e.getPresentation().setVisible(visible);
-        e.getPresentation().setEnabled(visible); // 可选：同时控制是否可点击
+        e.getPresentation().setEnabled(visible);
     }
 
 

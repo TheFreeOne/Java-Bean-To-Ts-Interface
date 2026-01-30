@@ -122,7 +122,7 @@ public class MockAllFieldJsonUtils {
             // 如果是简单类型或 JDK 类型，不展开
             if (isSimpleOrJdkType(fqn)) {
                 if (CommonUtils.isNumberType(psiType)) {
-                    return new JsonPrimitive(0);
+                    return new JsonPrimitive(10000);
                 } else if (CommonUtils.isStringType(psiType)) {
                     return new JsonPrimitive("");
                 } else if (CommonUtils.isJavaUtilDateType(psiType)) {
@@ -130,7 +130,7 @@ public class MockAllFieldJsonUtils {
                 } else if (isTimeType(fqn)) {
                     return new JsonPrimitive("");
                 } else if (CommonUtils.isBooleanType(psiType)) {
-                    return new JsonPrimitive(false);
+                    return new JsonPrimitive(true);
                 } else if (CommonUtils.isMapType(psiType)) {
                     return new JsonObject();
                 }
