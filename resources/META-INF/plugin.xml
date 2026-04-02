@@ -41,7 +41,7 @@
   </description>
 
   <change-notes>
-    0.4.0 生成请求方法的简要信息,用于投喂给AI; Generate a brief summary of the request method for AI input. &lt;br/&gt;
+    0.4.0 支持在方法名上右键生成请求方法的简要信息,用于投喂给AI; Supports right-clicking on method names to generate a brief summary of the request method for AI input. &lt;br/&gt;
     0.3.3 2025.1.7中AnAction无法获取文件,设置update方法中file为null也开启;bugfix &lt;br/&gt;
     0.3.2 模拟全部字段并放到json中;mock all fields into json &lt;br/&gt;
     0.3.1 Object => any &lt;br/&gt;
