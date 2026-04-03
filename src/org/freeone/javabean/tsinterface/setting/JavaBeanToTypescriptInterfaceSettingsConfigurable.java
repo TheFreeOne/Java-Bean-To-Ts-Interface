@@ -45,7 +45,7 @@ final class JavaBeanToTypescriptInterfaceSettingsConfigurable implements Configu
         modified |= settings.useAnnotationJsonProperty != mySettingsComponent.getUseJsonPropertyCheckBox().isSelected();
         modified |= settings.allowFindClassInAllScope != mySettingsComponent.getAllowFindClassInAllScope().isSelected();
         modified |= settings.ignoreParentField != mySettingsComponent.getIgnoreParentField().isSelected();
-        // TODO: 2026-04-03  
+        //: 2026-04-03
         modified |= settings.enableLocalDateToString != mySettingsComponent.getLocalDateToStringCheckbox().isSelected();
         JTable enableNameToStringListTable = mySettingsComponent.getEnableNameToStringListTable();
         List<String> stringsInTable = getStringsInTable(enableNameToStringListTable);
