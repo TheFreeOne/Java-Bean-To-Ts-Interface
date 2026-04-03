@@ -246,7 +246,7 @@ public class TypescriptUtils {
 
             //  2023-12-26 判断是或否使用JsonProperty
             if (JavaBeanToTypescriptInterfaceSettingsState.getInstance().useAnnotationJsonProperty) {
-                String jsonPropertyValue =CommonUtils.getJsonPropertyValue(fieldItem, allMethods);
+                String jsonPropertyValue = CommonUtils.getJsonPropertyValue(fieldItem, allMethods);
                 if (jsonPropertyValue != null) {
                     fieldName = jsonPropertyValue;
                 }
@@ -256,7 +256,6 @@ public class TypescriptUtils {
             boolean isNumber = CommonUtils.isNumberType(fieldItem.getType());
             boolean isString = CommonUtils.isStringType(fieldItem.getType());
             boolean isBoolean = CommonUtils.isBooleanType(fieldItem.getType());
-            boolean isJavaUtilDate = CommonUtils.isJavaUtilDateType(fieldItem.getType());
             boolean isMap = CommonUtils.isMap(fieldItem);
             if (isArray) {
                 // 获取泛型
@@ -265,8 +264,11 @@ public class TypescriptUtils {
             } else if (isMap) {
                 //  : 2023-12-06 针对map做处理
                 processMap(project, treeLevel, interfaceContent, fieldItem, fieldSplitTag);
-
-            } else if (isJavaUtilDate && JavaBeanToTypescriptInterfaceSettingsState.getInstance().enableDataToString) {
+            } else if (CommonUtils.isJavaUtilDateType(fieldItem.getType()) && JavaBeanToTypescriptInterfaceSettingsState.getInstance().enableDataToString) {
+                interfaceContent.append(fieldSplitTag).append("string");
+            } else if (CommonUtils.isJavaTimeLocalDateType(fieldItem.getType()) && JavaBeanToTypescriptInterfaceSettingsState.getInstance().enableLocalDateToString) {
+                interfaceContent.append(fieldSplitTag).append("string");
+            } else if (JavaBeanToTypescriptInterfaceSettingsState.getInstance().fullNameWithPackageToStringList.contains(fieldItem.getType().getCanonicalText())) {
                 interfaceContent.append(fieldSplitTag).append("string");
             } else {
                 if (isNumber) {
@@ -290,8 +292,6 @@ public class TypescriptUtils {
         // end of class
         interfaceContent.append("}\n");
     }
-
-
 
 
     private static void processDocComment(StringBuilder interfaceContent, PsiField fieldItem) {
@@ -380,7 +380,7 @@ public class TypescriptUtils {
             if (psiClass == null) {
                 // 2024-11-30 特殊处理，自定义泛型
                 PsiType type = fieldItem.getType();
-                if (type instanceof PsiClassReferenceType ) {
+                if (type instanceof PsiClassReferenceType) {
                     PsiClassReferenceType psiClassReferenceType = (PsiClassReferenceType) type;
                     psiClass = psiClassReferenceType.resolve();
                     canonicalText = psiClass.getQualifiedName();

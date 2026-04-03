@@ -2,7 +2,7 @@
 <idea-plugin>
   <id>org.freeone.javabean.tsinterface</id>
   <name>Java Bean 2 TS Interface</name>
-  <version>0.4.0</version>
+  <version>0.4.1</version>
   <vendor email="free077@qq.com" url="https://github.com/TheFreeOne/Java-Bean-To-Ts-Interface">TheFreeOne</vendor>
 
   <description>
@@ -41,6 +41,7 @@
   </description>
 
   <change-notes>
+    0.4.1 支持java.time.LocalDate和录入完整的类名转成字符串; Supports java.time.LocalDate and converts the fully qualified class name to a string. &lt;br/&gt;
     0.4.0 支持在方法名上右键生成请求方法的简要信息,用于投喂给AI; Supports right-clicking on method names to generate a brief summary of the request method for AI input. &lt;br/&gt;
     0.3.3 2025.1.7中AnAction无法获取文件,设置update方法中file为null也开启;bugfix &lt;br/&gt;
     0.3.2 模拟全部字段并放到json中;mock all fields into json &lt;br/&gt;
@@ -165,8 +166,8 @@
 
     <action id="GenerateMappingMarkDown"
             class="org.freeone.javabean.tsinterface.JavaBeanToTypescriptInterfaceAction"
-            text="Generate Mapping Markdown"
-            description="Generate Mapping Markdown">
+            text="Generate Mapping Markdown File"
+            description="Generate Mapping Markdown File">
       <!--添加到这个分组 的JavaBeanToTypescriptInterfaceEditAtTextareaToWrapper2的后面-->
       <add-to-group group-id="javaBeanToTypescriptInterfaceRightClickMenu" relative-to-action="JavaBeanToTypescriptInterfaceMockJson" anchor="after" />
     </action>

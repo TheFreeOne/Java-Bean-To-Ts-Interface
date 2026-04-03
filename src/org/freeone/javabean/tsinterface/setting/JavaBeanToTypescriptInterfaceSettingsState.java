@@ -9,6 +9,9 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * 持久化
  * Supports storing the application settings in a persistent way.
@@ -23,14 +26,20 @@ import org.jetbrains.annotations.Nullable;
  public final class JavaBeanToTypescriptInterfaceSettingsState implements PersistentStateComponent<JavaBeanToTypescriptInterfaceSettingsState> {
 
     public String userName = "TheFreeOne";
-
+    /**
+     * 这里应该是 date to string
+     */
     public boolean enableDataToString = false;
+
+    public boolean enableLocalDateToString = false;
 
     public boolean useAnnotationJsonProperty = false;
 
     public boolean allowFindClassInAllScope = true;
 
     public boolean ignoreParentField = false;
+
+    public List<String> fullNameWithPackageToStringList = new ArrayList<>();
 
 
 
@@ -79,5 +88,21 @@ import org.jetbrains.annotations.Nullable;
 
     public void setIgnoreParentField(boolean ignoreParentField) {
         this.ignoreParentField = ignoreParentField;
+    }
+
+    public boolean isEnableLocalDateToString() {
+        return enableLocalDateToString;
+    }
+
+    public void setEnableLocalDateToString(boolean enableLocalDateToString) {
+        this.enableLocalDateToString = enableLocalDateToString;
+    }
+
+    public List<String> getFullNameWithPackageToStringList() {
+        return fullNameWithPackageToStringList;
+    }
+
+    public void setFullNameWithPackageToStringList(List<String> fullNameWithPackageToStringList) {
+        this.fullNameWithPackageToStringList = fullNameWithPackageToStringList;
     }
 }

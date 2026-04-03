@@ -75,7 +75,7 @@ public class JavaBeanToTypescriptInterfaceAction extends AnAction {
         String menuText = Optional.ofNullable(presentation.getText()).orElse("");
 
         boolean isMockJson = menuText.equalsIgnoreCase("mock all field into json");
-        boolean isGenerateMappingMarkDown = menuText.equalsIgnoreCase("Generate Mapping Markdown");
+        boolean isGenerateMappingMarkDown = menuText.contains("Generate Mapping Markdown");
 
         try {
             if (!menuText.toLowerCase().startsWith("save")) {

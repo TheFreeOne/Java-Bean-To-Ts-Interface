@@ -232,14 +232,19 @@ public class TypescriptContentGenerator {
         String typeString = "any";
         if (fieldType == null || CommonUtils.isPlainObject(fieldType)) {
             typeString = "any";
+        } else if (CommonUtils.isJavaUtilDateType(fieldType) && JavaBeanToTypescriptInterfaceSettingsState.getInstance().enableDataToString) {
+            typeString = "string";
+        } else if (CommonUtils.isJavaTimeLocalDateType(fieldType) && JavaBeanToTypescriptInterfaceSettingsState.getInstance().enableLocalDateToString) {
+            typeString = "string";
+        } else if (JavaBeanToTypescriptInterfaceSettingsState.getInstance().fullNameWithPackageToStringList.contains(fieldType.getCanonicalText())) {
+            // 保存的列表含目标类名
+            typeString = "string";
         } else if (CommonUtils.isNumberType(fieldType)) {
             typeString = "number";
         } else if (CommonUtils.isStringType(fieldType)) {
             typeString = "string";
         } else if (CommonUtils.isBooleanType(fieldType)) {
             typeString = "boolean";
-        } else if (CommonUtils.isJavaUtilDateType(fieldType) && JavaBeanToTypescriptInterfaceSettingsState.getInstance().enableDataToString) {
-            typeString = "string";
         } else if (CommonUtils.isMapType(fieldType)) {
             typeString = processMap(project, fieldType);
         } else if (CommonUtils.isArrayType(fieldType)) {

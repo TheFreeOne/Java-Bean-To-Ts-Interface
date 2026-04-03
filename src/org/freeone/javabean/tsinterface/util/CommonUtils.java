@@ -182,6 +182,9 @@ public class CommonUtils {
     public static boolean isJavaUtilDateType(PsiType psiType) {
         return psiType.getCanonicalText().equals("java.util.Date");
     }
+    public static boolean isJavaTimeLocalDateType(PsiType psiType) {
+        return psiType.getCanonicalText().equals("java.time.LocalDate");
+    }
 
 
     public static boolean isBooleanType(PsiType psiType) {
